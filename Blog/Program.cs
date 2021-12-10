@@ -7,8 +7,11 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 // Identity
-builder.Services.AddDefaultIdentity<BlogUser>(options => options.SignIn.RequireConfirmedAccount = true)
-    .AddEntityFrameworkStores<BlogIdentityDbContext>();
+builder.Services.AddIdentity<BlogUser, IdentityRole>(options => options.SignIn.RequireConfirmedAccount = true)
+    .AddEntityFrameworkStores<BlogIdentityDbContext>()
+    .AddDefaultUI()
+    .AddDefaultTokenProviders();
+builder.Services.AddScoped<IUserClaimsPrincipalFactory<BlogUser>, AdditionalUserClaimsPrincipalFactory>();
 builder.Services.AddDbContext<BlogIdentityDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSqlDb")));
 // End of Identity
