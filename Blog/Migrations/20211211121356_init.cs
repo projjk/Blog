@@ -166,8 +166,8 @@ namespace Blog.Migrations
                     OwnerForeignKey = table.Column<string>(type: "text", nullable: false),
                     IsHidden = table.Column<bool>(type: "boolean", nullable: false),
                     VisitorCounter = table.Column<int>(type: "integer", nullable: false),
-                    BlogTitle = table.Column<string>(type: "text", nullable: false),
-                    BlogAddress = table.Column<string>(type: "text", nullable: false)
+                    BlogTitle = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    BlogAddress = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false)
                 },
                 constraints: table =>
                 {
@@ -212,14 +212,14 @@ namespace Blog.Migrations
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Url = table.Column<string>(type: "text", nullable: false),
-                    Title = table.Column<string>(type: "text", nullable: false),
+                    Url = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
+                    Title = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
                     PostDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     LastUpdate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     AuthorId = table.Column<string>(type: "text", nullable: true),
                     Body = table.Column<string>(type: "text", nullable: false),
                     ViewCount = table.Column<int>(type: "integer", nullable: false),
-                    CategoryId = table.Column<int>(type: "integer", nullable: true),
+                    CategoryId = table.Column<int>(type: "integer", nullable: false),
                     BlogId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
@@ -239,7 +239,8 @@ namespace Blog.Migrations
                         name: "FK_Articles_Categories_CategoryId",
                         column: x => x.CategoryId,
                         principalTable: "Categories",
-                        principalColumn: "Id");
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -295,6 +296,21 @@ namespace Blog.Migrations
                         principalTable: "Blogs",
                         principalColumn: "Id");
                 });
+
+            migrationBuilder.InsertData(
+                table: "AspNetUsers",
+                columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "DisplayName", "Email", "EmailConfirmed", "FullName", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
+                values: new object[] { "7cafdc8c-dbb4-42d7-877d-534bb57998c6", 0, "ae0fe4bd-cd57-450c-abfd-3426bf1102aa", "Jakal", "test@local.com", true, "Jake Jeon", true, null, "TEST@LOCAL.COM", "TEST@LOCAL.COM", "AQAAAAEAACcQAAAAEOkocHMDnr1m69CBryi0B9SRqdaELZn9MSI1rZ4QtNruKGUrBxf/oM7vLibo1CmpcQ==", null, false, "UDAQGSO7AXESNGWWZM5CJYTVR47QG6LP", false, "test@local.com" });
+
+            migrationBuilder.InsertData(
+                table: "Blogs",
+                columns: new[] { "Id", "BlogAddress", "BlogTitle", "IsHidden", "OwnerForeignKey", "VisitorCounter" },
+                values: new object[] { 1, "jake", "In the Matrix", false, "7cafdc8c-dbb4-42d7-877d-534bb57998c6", 0 });
+
+            migrationBuilder.InsertData(
+                table: "Categories",
+                columns: new[] { "Id", "BlogId", "Count", "Name", "OwnerId" },
+                values: new object[] { 1, 1, 0, "General", "7cafdc8c-dbb4-42d7-877d-534bb57998c6" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Articles_AuthorId",

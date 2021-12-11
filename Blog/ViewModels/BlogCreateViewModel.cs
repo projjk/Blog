@@ -12,6 +12,6 @@ public class BlogCreateViewModel
 
     [Required(ErrorMessage = "Please enter your blog's address")]
     [Display(Name = "Blog Address")]
-    [StringLength(10, MinimumLength = 4)]
+    [StringLength(16, MinimumLength = 4)]
     public string BlogAddress { get; set; } = null!;
 }

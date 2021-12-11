@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Blog.Migrations
 {
     [DbContext(typeof(BlogIdentityDbContext))]
-    [Migration("20211210181228_init")]
+    [Migration("20211211121356_init")]
     partial class init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -94,6 +94,26 @@ namespace Blog.Migrations
                         .HasDatabaseName("UserNameIndex");
 
                     b.ToTable("AspNetUsers", (string)null);
+
+                    b.HasData(
+                        new
+                        {
+                            Id = "7cafdc8c-dbb4-42d7-877d-534bb57998c6",
+                            AccessFailedCount = 0,
+                            ConcurrencyStamp = "ae0fe4bd-cd57-450c-abfd-3426bf1102aa",
+                            DisplayName = "Jakal",
+                            Email = "test@local.com",
+                            EmailConfirmed = true,
+                            FullName = "Jake Jeon",
+                            LockoutEnabled = true,
+                            NormalizedEmail = "TEST@LOCAL.COM",
+                            NormalizedUserName = "TEST@LOCAL.COM",
+                            PasswordHash = "AQAAAAEAACcQAAAAEOkocHMDnr1m69CBryi0B9SRqdaELZn9MSI1rZ4QtNruKGUrBxf/oM7vLibo1CmpcQ==",
+                            PhoneNumberConfirmed = false,
+                            SecurityStamp = "UDAQGSO7AXESNGWWZM5CJYTVR47QG6LP",
+                            TwoFactorEnabled = false,
+                            UserName = "test@local.com"
+                        });
                 });
 
             modelBuilder.Entity("Blog.Models.Article", b =>
@@ -114,7 +134,7 @@ namespace Blog.Migrations
                         .IsRequired()
                         .HasColumnType("text");
 
-                    b.Property<int?>("CategoryId")
+                    b.Property<int>("CategoryId")
                         .HasColumnType("integer");
 
                     b.Property<DateTime>("LastUpdate")
@@ -125,11 +145,13 @@ namespace Blog.Migrations
 
                     b.Property<string>("Title")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<string>("Url")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<int>("ViewCount")
                         .HasColumnType("integer");
@@ -155,11 +177,13 @@ namespace Blog.Migrations
 
                     b.Property<string>("BlogAddress")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(16)
+                        .HasColumnType("character varying(16)");
 
                     b.Property<string>("BlogTitle")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)");
 
                     b.Property<bool>("IsHidden")
                         .HasColumnType("boolean");
@@ -177,6 +201,17 @@ namespace Blog.Migrations
                         .IsUnique();
 
                     b.ToTable("Blogs");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            BlogAddress = "jake",
+                            BlogTitle = "In the Matrix",
+                            IsHidden = false,
+                            OwnerForeignKey = "7cafdc8c-dbb4-42d7-877d-534bb57998c6",
+                            VisitorCounter = 0
+                        });
                 });
 
             modelBuilder.Entity("Blog.Models.Category", b =>
@@ -207,6 +242,16 @@ namespace Blog.Migrations
                     b.HasIndex("OwnerId");
 
                     b.ToTable("Categories");
+
+                    b.HasData(
+                        new
+                        {
+                            Id = 1,
+                            BlogId = 1,
+                            Count = 0,
+                            Name = "General",
+                            OwnerId = "7cafdc8c-dbb4-42d7-877d-534bb57998c6"
+                        });
                 });
 
             modelBuilder.Entity("Blog.Models.Comment", b =>
@@ -420,7 +465,9 @@ namespace Blog.Migrations
 
                     b.HasOne("Blog.Models.Category", "Category")
                         .WithMany()
-                        .HasForeignKey("CategoryId");
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Author");
 

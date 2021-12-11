@@ -1,3 +1,4 @@
+using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
 using Blog.Areas.Identity.Data;
 
@@ -14,7 +15,11 @@ public class Blog
 
     public bool IsHidden { get; set; }
     public int VisitorCounter { get; set; }
+
+    [StringLength(50)]
     public string BlogTitle { get; set; } = null!;
+    
+    [StringLength(16)]
     public string BlogAddress { get; set; } = null!;
     public IEnumerable<Article>? Articles { get; set; }
     public IEnumerable<Category> Categories { get; set; } = null!;

@@ -1,4 +1,5 @@
 using AutoMapper;
+using Blog.Models;
 using Blog.ViewModels;
 
 namespace Blog.Profiles;
@@ -9,5 +10,7 @@ public class BlogProfile : Profile
     {
         CreateMap<Models.Blog, BlogCreateViewModel>()
             .ReverseMap();
+        CreateMap<Article, BlogWriteViewModel>()
+            .ReverseMap().ForMember(a => a.Tags, opt => opt.Ignore());
     }
 }

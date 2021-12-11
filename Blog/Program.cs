@@ -52,6 +52,10 @@ app.MapControllerRoute(
     pattern: "Blog/Create",
     defaults: new { controller = "Blog", action = "Create" });
 app.MapControllerRoute(
+    name: "blogCreateComplete",
+    pattern: "Blog/CreateComplete",
+    defaults: new { controller = "Blog", action = "CreateComplete" });
+app.MapControllerRoute(
     name: "blog",
     pattern: "Blog/{blogAddress?}/{action=Index}/{id?}",
     defaults: new { controller = "Blog" });
