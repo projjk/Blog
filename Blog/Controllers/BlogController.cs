@@ -50,7 +50,9 @@ public class BlogController : Controller
 
             if (blog == null)
             {
-                //return RedirectToAction("Error"); // @todo display a message "There's no default blog"
+                ViewBag.ErrorMessage = "Can't find the default blog to show.";
+                _logger.LogCritical("Can't find the default blog.");
+                return View("Error");
             }
         }
         else
@@ -58,7 +60,8 @@ public class BlogController : Controller
             blog = await _db.Blogs.Include(b => b.Owner).FirstOrDefaultAsync(b => b.BlogAddress == blogAddress);
             if (blog == null)
             {
-                //return RedirectToAction("Error"); // @todo display a message "There's no such blog"
+                ViewBag.ErrorMessage = "There's no blog with that address.";
+                return View("Error");
             }
         }
 
@@ -150,11 +153,5 @@ public class BlogController : Controller
     public IActionResult Manage()
     {
         return View();
-    }
-
-    [ResponseCache(Duration = 0, Location = ResponseCacheLocation.None, NoStore = true)]
-    public IActionResult Error()
-    {
-        return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
     }
 }
