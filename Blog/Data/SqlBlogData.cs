@@ -1,4 +1,5 @@
 using Blog.Areas.Identity.Data;
+using Blog.Models;
 using Microsoft.EntityFrameworkCore;
 
 namespace Blog.Data;
@@ -21,5 +22,11 @@ public class SqlBlogData : ISqlBlogData
     public int Commit()
     {
         return _db.SaveChanges();
+    }
+
+    public void CreateArticle(Article article)
+    {
+        _db.Articles.Add(article);
+        Commit();
     }
 }

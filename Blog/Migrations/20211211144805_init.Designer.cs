@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Blog.Migrations
 {
     [DbContext(typeof(BlogIdentityDbContext))]
-    [Migration("20211211121356_init")]
+    [Migration("20211211144805_init")]
     partial class init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -23,6 +23,21 @@ namespace Blog.Migrations
                 .HasAnnotation("Relational:MaxIdentifierLength", 63);
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
+
+            modelBuilder.Entity("ArticleTag", b =>
+                {
+                    b.Property<int>("ArticlesId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TagsId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("ArticlesId", "TagsId");
+
+                    b.HasIndex("TagsId");
+
+                    b.ToTable("ArticleTag");
+                });
 
             modelBuilder.Entity("Blog.Areas.Identity.Data.BlogUser", b =>
                 {
@@ -230,7 +245,8 @@ namespace Blog.Migrations
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<string>("OwnerId")
                         .HasColumnType("text");
@@ -277,7 +293,8 @@ namespace Blog.Migrations
                         .HasColumnType("text");
 
                     b.Property<string>("Password")
-                        .HasColumnType("text");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.Property<DateTime>("PostDate")
                         .HasColumnType("timestamp with time zone");
@@ -299,26 +316,32 @@ namespace Blog.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("ArticleId")
-                        .HasColumnType("integer");
-
-                    b.Property<int?>("BlogId")
-                        .HasColumnType("integer");
-
                     b.Property<int>("Count")
                         .HasColumnType("integer");
 
                     b.Property<string>("Name")
                         .IsRequired()
-                        .HasColumnType("text");
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)");
 
                     b.HasKey("Id");
 
-                    b.HasIndex("ArticleId");
-
-                    b.HasIndex("BlogId");
-
                     b.ToTable("Tags");
+                });
+
+            modelBuilder.Entity("BlogTag", b =>
+                {
+                    b.Property<int>("BlogsId")
+                        .HasColumnType("integer");
+
+                    b.Property<int>("TagsId")
+                        .HasColumnType("integer");
+
+                    b.HasKey("BlogsId", "TagsId");
+
+                    b.HasIndex("TagsId");
+
+                    b.ToTable("BlogTag");
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -453,6 +476,21 @@ namespace Blog.Migrations
                     b.ToTable("AspNetUserTokens", (string)null);
                 });
 
+            modelBuilder.Entity("ArticleTag", b =>
+                {
+                    b.HasOne("Blog.Models.Article", null)
+                        .WithMany()
+                        .HasForeignKey("ArticlesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Blog.Models.Tag", null)
+                        .WithMany()
+                        .HasForeignKey("TagsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Blog.Models.Article", b =>
                 {
                     b.HasOne("Blog.Areas.Identity.Data.BlogUser", "Author")
@@ -511,15 +549,19 @@ namespace Blog.Migrations
                     b.Navigation("BlogUser");
                 });
 
-            modelBuilder.Entity("Blog.Models.Tag", b =>
+            modelBuilder.Entity("BlogTag", b =>
                 {
-                    b.HasOne("Blog.Models.Article", null)
-                        .WithMany("Tags")
-                        .HasForeignKey("ArticleId");
-
                     b.HasOne("Blog.Models.Blog", null)
-                        .WithMany("Tags")
-                        .HasForeignKey("BlogId");
+                        .WithMany()
+                        .HasForeignKey("BlogsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Blog.Models.Tag", null)
+                        .WithMany()
+                        .HasForeignKey("TagsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
@@ -581,8 +623,6 @@ namespace Blog.Migrations
             modelBuilder.Entity("Blog.Models.Article", b =>
                 {
                     b.Navigation("Comments");
-
-                    b.Navigation("Tags");
                 });
 
             modelBuilder.Entity("Blog.Models.Blog", b =>
@@ -590,8 +630,6 @@ namespace Blog.Migrations
                     b.Navigation("Articles");
 
                     b.Navigation("Categories");
-
-                    b.Navigation("Tags");
                 });
 #pragma warning restore 612, 618
         }

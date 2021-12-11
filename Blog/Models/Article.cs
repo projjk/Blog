@@ -20,6 +20,6 @@ public class Article
     public string Body { get; set; } = null!;
     public int ViewCount { get; set; }
     public Category Category { get; set; } = null!;
-    public IEnumerable<Tag>? Tags { get; set; }
-    public IEnumerable<Comment>? Comments { get; set; }
+    public ICollection<Tag>? Tags { get; set; }
+    public ICollection<Comment>? Comments { get; set; }
 }

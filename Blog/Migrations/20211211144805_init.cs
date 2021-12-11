@@ -52,6 +52,20 @@ namespace Blog.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Tags",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "integer", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
+                    Name = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
+                    Count = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Tags", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "AspNetRoleClaims",
                 columns: table => new
                 {
@@ -181,12 +195,36 @@ namespace Blog.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "BlogTag",
+                columns: table => new
+                {
+                    BlogsId = table.Column<int>(type: "integer", nullable: false),
+                    TagsId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_BlogTag", x => new { x.BlogsId, x.TagsId });
+                    table.ForeignKey(
+                        name: "FK_BlogTag_Blogs_BlogsId",
+                        column: x => x.BlogsId,
+                        principalTable: "Blogs",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_BlogTag_Tags_TagsId",
+                        column: x => x.TagsId,
+                        principalTable: "Tags",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Categories",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "integer", nullable: false)
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false),
+                    Name = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     Count = table.Column<int>(type: "integer", nullable: false),
                     OwnerId = table.Column<string>(type: "text", nullable: true),
                     BlogId = table.Column<int>(type: "integer", nullable: true)
@@ -244,6 +282,30 @@ namespace Blog.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ArticleTag",
+                columns: table => new
+                {
+                    ArticlesId = table.Column<int>(type: "integer", nullable: false),
+                    TagsId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ArticleTag", x => new { x.ArticlesId, x.TagsId });
+                    table.ForeignKey(
+                        name: "FK_ArticleTag_Articles_ArticlesId",
+                        column: x => x.ArticlesId,
+                        principalTable: "Articles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_ArticleTag_Tags_TagsId",
+                        column: x => x.TagsId,
+                        principalTable: "Tags",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Comments",
                 columns: table => new
                 {
@@ -253,7 +315,7 @@ namespace Blog.Migrations
                     PostDate = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
                     BlogUserId = table.Column<string>(type: "text", nullable: true),
                     Author = table.Column<string>(type: "text", nullable: false),
-                    Password = table.Column<string>(type: "text", nullable: true),
+                    Password = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
                     ArticleId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
@@ -268,32 +330,6 @@ namespace Blog.Migrations
                         name: "FK_Comments_AspNetUsers_BlogUserId",
                         column: x => x.BlogUserId,
                         principalTable: "AspNetUsers",
-                        principalColumn: "Id");
-                });
-
-            migrationBuilder.CreateTable(
-                name: "Tags",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "integer", nullable: false)
-                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityByDefaultColumn),
-                    Name = table.Column<string>(type: "text", nullable: false),
-                    Count = table.Column<int>(type: "integer", nullable: false),
-                    ArticleId = table.Column<int>(type: "integer", nullable: true),
-                    BlogId = table.Column<int>(type: "integer", nullable: true)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_Tags", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_Tags_Articles_ArticleId",
-                        column: x => x.ArticleId,
-                        principalTable: "Articles",
-                        principalColumn: "Id");
-                    table.ForeignKey(
-                        name: "FK_Tags_Blogs_BlogId",
-                        column: x => x.BlogId,
-                        principalTable: "Blogs",
                         principalColumn: "Id");
                 });
 
@@ -326,6 +362,11 @@ namespace Blog.Migrations
                 name: "IX_Articles_CategoryId",
                 table: "Articles",
                 column: "CategoryId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_ArticleTag_TagsId",
+                table: "ArticleTag",
+                column: "TagsId");
 
             migrationBuilder.CreateIndex(
                 name: "IX_AspNetRoleClaims_RoleId",
@@ -371,6 +412,11 @@ namespace Blog.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_BlogTag_TagsId",
+                table: "BlogTag",
+                column: "TagsId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Categories_BlogId",
                 table: "Categories",
                 column: "BlogId");
@@ -389,20 +435,13 @@ namespace Blog.Migrations
                 name: "IX_Comments_BlogUserId",
                 table: "Comments",
                 column: "BlogUserId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Tags_ArticleId",
-                table: "Tags",
-                column: "ArticleId");
-
-            migrationBuilder.CreateIndex(
-                name: "IX_Tags_BlogId",
-                table: "Tags",
-                column: "BlogId");
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropTable(
+                name: "ArticleTag");
+
             migrationBuilder.DropTable(
                 name: "AspNetRoleClaims");
 
@@ -419,13 +458,16 @@ namespace Blog.Migrations
                 name: "AspNetUserTokens");
 
             migrationBuilder.DropTable(
+                name: "BlogTag");
+
+            migrationBuilder.DropTable(
                 name: "Comments");
 
             migrationBuilder.DropTable(
-                name: "Tags");
+                name: "AspNetRoles");
 
             migrationBuilder.DropTable(
-                name: "AspNetRoles");
+                name: "Tags");
 
             migrationBuilder.DropTable(
                 name: "Articles");

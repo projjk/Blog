@@ -10,6 +10,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Principal;
+using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 
 namespace Blog.Controllers;
@@ -34,7 +35,6 @@ public class BlogController : Controller
         _configuration = configuration;
     }
 
-    [HttpGet]
     public async Task<IActionResult> Index(string blogAddress)
     {
         Models.Blog? blog;
@@ -68,9 +68,104 @@ public class BlogController : Controller
         return View(blog);
     }
 
-    public IActionResult Write()
+    [Authorize]
+    public async Task<IActionResult> Write()
     {
-        return View();
+        var model = new BlogWriteViewModel();
+        var user = await _db.Users.Include(x => x.Blog)
+            .SingleOrDefaultAsync(x => x.Id == _userManager.GetUserId(User));
+        if (user!.Blog == null)
+        {
+            ViewBag.ErrorMessage = "You should create your blog first.";
+            return View("Error");
+        }
+
+        model.Categories = await _db.Categories.Where(d => d.Owner == user).ToListAsync();
+        return View(model);
+    }
+
+    [HttpPost]
+    [Authorize]
+    public async Task<IActionResult> Write(BlogWriteViewModel model)
+    {
+        var user = await _db.Users
+            .Include(x => x.Blog)
+            .ThenInclude(i => i.Articles)
+            .Include(x => x.Blog)
+            .ThenInclude(i => i.Tags)
+            .SingleOrDefaultAsync(x => x.Id == _userManager.GetUserId(User));
+
+        // Blog
+        if (user!.Blog == null)
+        {
+            ModelState.AddModelError("Title", "You should create your blog first.");
+            return View(model);
+        }
+
+        // Category
+        model.Categories = await _db.Categories.Where(d => d.Owner == user).ToListAsync();
+        var category = await _db.Categories.FirstOrDefaultAsync(c => c.Id == model.CategoryId && c.Owner == user);
+        if (category == null)
+        {
+            ModelState.AddModelError("CategoryId", "You selected a category that isn't set by you.");
+            return View(model);
+        }
+        category.Count++;
+
+        // URL
+        if (model.Url == null)
+        {
+            ModelState.AddModelError("Url", "Please enter your article's address");
+            return View(model);
+        }
+
+        var m = Regex.Match(model.Url, @"^[\w-]+$", RegexOptions.IgnoreCase);
+        if (!m.Success)
+        {
+            ModelState.AddModelError("Url", "There's an unsupported letter in your address.");
+            return View(model);
+        }
+
+        if (await _db.Articles.SingleOrDefaultAsync(a => a.Author == user && a.Url == model.Url) != null)
+        {
+            ModelState.AddModelError("Url", "There's a duplicate article address on your blog.");
+            return View(model);
+        }
+
+        var article = _mapper.Map<Article>(model);
+        article.Author = user;
+        article.PostDate = DateTime.UtcNow;
+        article.Category = category;
+
+        // Tags
+        if (model.Tags != null)
+        {
+            user.Blog.Tags ??= new List<Tag>();
+            article.Tags ??= new List<Tag>();
+            foreach (string s in model.Tags.Split(','))
+            {
+                var tagName = s.Trim().ToUpper();
+                Tag newTag;
+                var oldTag = await _db.Tags.SingleOrDefaultAsync(t => t.Name == tagName);
+                if (oldTag != null)
+                {
+                    oldTag.Count++;
+                    newTag = oldTag;
+                }
+                else
+                {
+                    newTag = new Tag { Name = tagName, Count = 1};
+                }
+
+                user.Blog.Tags.Add(newTag);
+                article.Tags.Add(newTag);
+            }
+        }
+
+        user.Blog.Articles ??= new List<Article>();
+        user.Blog.Articles.Add(article);
+        _repository.CreateArticle(article);
+        return RedirectToAction("Index");
     }
 
     public IActionResult Edit(int id)
@@ -83,7 +178,6 @@ public class BlogController : Controller
         return View();
     }
 
-    [HttpGet]
     [Authorize]
     public IActionResult Create()
     {
@@ -97,7 +191,8 @@ public class BlogController : Controller
         if (ModelState.IsValid)
         {
             model.BlogAddress = model.BlogAddress.ToLower();
-            var addressBlackList = new[] { "create", "view", "cancel", "edit", "manage", "delete", "post", "jake", "admin", "view" };
+            var addressBlackList = new[]
+                { "create", "view", "cancel", "edit", "manage", "delete", "post", "jake", "admin", "view" };
             var titleBlackList = new[] { "fuck", "suck" };
             if (addressBlackList.FirstOrDefault(elem => model.BlogAddress.Contains(elem)) != null
                 || titleBlackList.FirstOrDefault(elem => model.BlogAddress.Contains(elem)) != null)
@@ -105,15 +200,18 @@ public class BlogController : Controller
                 ModelState.AddModelError("BlogAddress", "The address contains forbidden words.");
                 return View(model);
             }
+
             if (titleBlackList.FirstOrDefault(elem => model.BlogTitle.Contains(elem)) != null)
             {
                 ModelState.AddModelError("BlogTitle", "The title contains forbidden words.");
                 return View(model);
             }
+
             var exist = await _db.Blogs.FirstOrDefaultAsync(b => b.BlogAddress == model.BlogAddress);
             if (exist != null)
             {
-                ModelState.AddModelError("BlogAddress", "This address is already used by someone. Try with another one.");
+                ModelState.AddModelError("BlogAddress",
+                    "This address is already used by someone. Try with another one.");
                 return View(model);
             }
 
@@ -132,7 +230,7 @@ public class BlogController : Controller
                 _logger.LogCritical("Cannot retrieve a user info during blog creation.");
                 return View(model);
             }
-            
+
             var blog = _mapper.Map<Models.Blog>(model);
             user.Blog = blog;
             blog.Owner = user;
@@ -146,8 +244,8 @@ public class BlogController : Controller
 
     public IActionResult CreateComplete()
     {
-        ViewBag.CompleteMessage = "Thanks for your order. You'll soon enjoy our delicious pies!";
-        return View("View");
+        ViewBag.SuccessMessage = "You created a new blog!";
+        return View();
     }
 
     public IActionResult Manage()

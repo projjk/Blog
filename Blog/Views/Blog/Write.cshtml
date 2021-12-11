@@ -1,7 +1,61 @@
 ﻿@{
     ViewData["Title"] = "Blog Write";
 }
+@using Blog.ViewModels
+@model BlogWriteViewModel
+
 
 <div class="text-center">
-    <h1 class="display-4">Writing Page</h1>
+    <div class="container col-sm-8">
+        <form asp-action="Write" method="post">
+            <div class="row mb-4">
+                <label asp-for="Title" class="col-sm-2 col-form-label"></label>
+                <div class="col">
+                    <input asp-for="Title" class="form-control"/>
+                    <span asp-validation-for="Title" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="row mb-4">
+                <label asp-for="Body" class="col-sm-2 col-form-label"></label>
+                <div class="col">
+                    <textarea asp-for="Body" class="form-control" rows="12"></textarea>
+                    <span asp-validation-for="Body" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="row mb-4">
+                <label asp-for="CategoryId" class="col-sm-2 col-form-label"></label>
+                <div class="col">
+                    <select asp-for="CategoryId"
+                            asp-items="@(new SelectList(Model!.Categories, nameof(Category.Id), nameof(Category.Name)))"
+                            class="form-select" aria-label="Default select example">
+                    </select>
+                    <span asp-validation-for="CategoryId" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="row mb-4">
+                <label asp-for="Tags" class="col-sm-2 col-form-label"></label>
+                <div class="col">
+                    <input asp-for="Tags" class="form-control" placeholder="Separate tags by comma(,)"/>
+                    <span asp-validation-for="Tags" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="row mb-4">
+                <label asp-for="Url" class="col-sm-2 col-form-label"></label>
+                <div class="col">
+                    <input asp-for="Url" class="form-control"/>
+                    <span asp-validation-for="Url" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col">
+                    <input type="submit" class="btn btn-primary" value="Post"/>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
+
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial"/>
+}

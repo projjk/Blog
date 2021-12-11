@@ -21,7 +21,7 @@ public class Blog
     
     [StringLength(16)]
     public string BlogAddress { get; set; } = null!;
-    public IEnumerable<Article>? Articles { get; set; }
-    public IEnumerable<Category> Categories { get; set; } = null!;
-    public IEnumerable<Tag>? Tags { get; set; }
+    public ICollection<Article>? Articles { get; set; }
+    public ICollection<Category> Categories { get; set; } = null!;
+    public ICollection<Tag>? Tags { get; set; }
 }
