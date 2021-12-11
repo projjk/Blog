@@ -30,14 +30,6 @@ namespace Blog.Migrations
                     b.Property<int>("AccessFailedCount")
                         .HasColumnType("integer");
 
-                    b.Property<string>("BlogAddress")
-                        .IsRequired()
-                        .HasColumnType("text");
-
-                    b.Property<string>("BlogTitle")
-                        .IsRequired()
-                        .HasColumnType("text");
-
                     b.Property<string>("ConcurrencyStamp")
                         .IsConcurrencyToken()
                         .HasColumnType("text");
@@ -148,7 +140,7 @@ namespace Blog.Migrations
 
                     b.HasIndex("CategoryId");
 
-                    b.ToTable("Articles");
+                    b.ToTable("Articles", (string)null);
                 });
 
             modelBuilder.Entity("Blog.Models.Blog", b =>
@@ -159,10 +151,19 @@ namespace Blog.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityByDefaultColumn(b.Property<int>("Id"));
 
+                    b.Property<string>("BlogAddress")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("BlogTitle")
+                        .IsRequired()
+                        .HasColumnType("text");
+
                     b.Property<bool>("IsHidden")
                         .HasColumnType("boolean");
 
-                    b.Property<string>("OwnerId")
+                    b.Property<string>("OwnerForeignKey")
+                        .IsRequired()
                         .HasColumnType("text");
 
                     b.Property<int>("VisitorCounter")
@@ -170,9 +171,10 @@ namespace Blog.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("OwnerId");
+                    b.HasIndex("OwnerForeignKey")
+                        .IsUnique();
 
-                    b.ToTable("Blogs");
+                    b.ToTable("Blogs", (string)null);
                 });
 
             modelBuilder.Entity("Blog.Models.Category", b =>
@@ -202,7 +204,7 @@ namespace Blog.Migrations
 
                     b.HasIndex("OwnerId");
 
-                    b.ToTable("Categories");
+                    b.ToTable("Categories", (string)null);
                 });
 
             modelBuilder.Entity("Blog.Models.Comment", b =>
@@ -239,7 +241,7 @@ namespace Blog.Migrations
 
                     b.HasIndex("BlogUserId");
 
-                    b.ToTable("Comments");
+                    b.ToTable("Comments", (string)null);
                 });
 
             modelBuilder.Entity("Blog.Models.Tag", b =>
@@ -269,7 +271,7 @@ namespace Blog.Migrations
 
                     b.HasIndex("BlogId");
 
-                    b.ToTable("Tags");
+                    b.ToTable("Tags", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRole", b =>
@@ -426,8 +428,10 @@ namespace Blog.Migrations
             modelBuilder.Entity("Blog.Models.Blog", b =>
                 {
                     b.HasOne("Blog.Areas.Identity.Data.BlogUser", "Owner")
-                        .WithMany()
-                        .HasForeignKey("OwnerId");
+                        .WithOne("Blog")
+                        .HasForeignKey("Blog.Models.Blog", "OwnerForeignKey")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
 
                     b.Navigation("Owner");
                 });
@@ -518,6 +522,11 @@ namespace Blog.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Blog.Areas.Identity.Data.BlogUser", b =>
+                {
+                    b.Navigation("Blog");
                 });
 
             modelBuilder.Entity("Blog.Models.Article", b =>

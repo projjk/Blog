@@ -1,8 +1,20 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
 }
-
+@model Blog
 <div class="text-center">
     <h1 class="display-4">Blog Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+    @if (Model != null)
+    {
+        <h1 class="display-4">@Model.BlogTitle</h1>
+        @if (Model.Owner != null)
+        {
+            <h1 class="display-4">- @Model.Owner.DisplayName</h1>
+            <h1 class="display-4">- @Model.Owner.Blog?.BlogTitle</h1>
+        }
+    }
+    <p>
+        <a asp-area="" asp-controller="Blog" asp-action="Write">Write</a>
+        <a asp-area="" asp-controller="Blog" asp-action="Create">Create</a>
+    </p>
 </div>

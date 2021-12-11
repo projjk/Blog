@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Blog.Models;
 using Microsoft.AspNetCore.Identity;
 
 namespace Blog.Areas.Identity.Data;
@@ -11,7 +12,6 @@ public class BlogUser : IdentityUser
 {
     [PersonalData] public string FullName { get; set; } = null!;
     [PersonalData] public string DisplayName { get; set; } = null!;
-    [PersonalData] public string BlogTitle { get; set; } = null!;
-    [PersonalData] public string BlogAddress { get; set; } = null!;
+    [PersonalData] public Models.Blog? Blog { get; set; }
 }
 

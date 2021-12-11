@@ -111,16 +111,6 @@ namespace Blog.Areas.Identity.Pages.Account
             [DataType(DataType.Text)]
             [Display(Name = "Display name")]
             public string DisplayName { get; set; }
-
-            [Required]
-            [DataType(DataType.Text)]
-            [Display(Name = "Blog Title")]
-            public string BlogTitle { get; set; }
-
-            [Required]
-            [DataType(DataType.Text)]
-            [Display(Name = "Blog Address")]
-            public string BlogAddress { get; set; }
         }
 
 
@@ -187,8 +177,6 @@ namespace Blog.Areas.Identity.Pages.Account
                 var user = Activator.CreateInstance<BlogUser>();
                 user.FullName = Input.FullName;
                 user.DisplayName = Input.DisplayName;
-                user.BlogTitle = Input.BlogTitle;
-                user.BlogAddress = Input.BlogAddress;
                 return user;
             }
             catch

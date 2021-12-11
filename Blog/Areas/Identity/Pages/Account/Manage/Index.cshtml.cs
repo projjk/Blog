@@ -69,16 +69,6 @@ namespace Blog.Areas.Identity.Pages.Account.Manage
             [DataType(DataType.Text)]
             [Display(Name = "Display name")]
             public string DisplayName { get; set; }
-            
-            [Required]
-            [DataType(DataType.Text)]
-            [Display(Name = "Blog Title")]
-            public string BlogTitle { get; set; }
-            
-            [Required]
-            [DataType(DataType.Text)]
-            [Display(Name = "Blog Address")]
-            public string BlogAddress { get; set; }
 
         }
 
@@ -93,8 +83,6 @@ namespace Blog.Areas.Identity.Pages.Account.Manage
             {
                 FullName = user.FullName,
                 DisplayName = user.DisplayName,
-                BlogTitle = user.BlogTitle,
-                BlogAddress = user.BlogAddress,
                 PhoneNumber = phoneNumber
             };
         }
@@ -144,16 +132,6 @@ namespace Blog.Areas.Identity.Pages.Account.Manage
             if (Input.DisplayName != user.DisplayName)
             {
                 user.DisplayName = Input.DisplayName;
-            }
-            
-            if (Input.BlogTitle != user.BlogTitle)
-            {
-                user.BlogTitle = Input.BlogTitle;
-            }
-            
-            if (Input.BlogAddress != user.BlogAddress)
-            {
-                user.BlogAddress = Input.BlogAddress;
             }
             
             await _userManager.UpdateAsync(user);

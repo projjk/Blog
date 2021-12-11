@@ -1,0 +1,36 @@
+﻿@{
+    ViewData["Title"] = "Blog Create";
+}
+@using Blog.ViewModels
+@model BlogCreateViewModel
+
+<div class="text-center">
+    <h1 class="display-4">Create your blog</h1>
+    <div class="container col-sm-8">
+        <form asp-action="Create" method="post" class="">
+            <div class="row mb-4">
+                <label asp-for="BlogTitle" class="col-sm-2 col-form-label"></label>
+                <div class="col">
+                    <input asp-for="BlogTitle" class="form-control"/>
+                    <span asp-validation-for="BlogTitle" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <label asp-for="BlogAddress" class="col-sm-2 col-form-label"></label>
+
+                <div class="input-group col">                         
+                        <span class="input-group-text pe-1" id="basic-addon">https://projectcode9.com/Blog/</span>
+
+                    <input asp-for="BlogAddress" class="form-control ps-1" style="min-width: 50px; "aria-describedby="basic-addon"/>
+                    <span asp-validation-for="BlogAddress" class="text-danger"></span>
+                </div>
+            </div>
+
+            <div class="row mb-3">
+                <div class="col">
+                    <input type="submit" class="btn btn-primary" value="Create"/>
+                </div>
+            </div>
+        </form>
+    </div>
+</div>

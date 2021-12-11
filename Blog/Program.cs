@@ -1,3 +1,4 @@
+using System.Reflection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Blog.Data;
@@ -21,6 +22,7 @@ builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 builder.Services.AddControllersWithViews();
 
 builder.Services.AddScoped<ISqlBlogData, SqlBlogData>();
+builder.Services.AddAutoMapper(Assembly.GetExecutingAssembly());
 
 var app = builder.Build();
 
@@ -46,8 +48,17 @@ app.UseAuthorization();
 
 
 app.MapControllerRoute(
+    name: "blogCreate",
+    pattern: "Blog/Create",
+    defaults: new { controller = "Blog", action = "Create" });
+app.MapControllerRoute(
     name: "blog",
-    pattern: "{controller=Blog}/{blogname}/{action=Index}/{id?}");
+    pattern: "Blog/{blogAddress?}/{action=Index}/{id?}",
+    defaults: new { controller = "Blog" });
+app.MapControllerRoute(
+    name: "blogView",
+    pattern: "Blog/{blogAddress}/{articleUrl}",
+    defaults: new { controller = "Blog", action = "View" });
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
