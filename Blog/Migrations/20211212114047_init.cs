@@ -227,6 +227,8 @@ namespace Blog.Migrations
                     Name = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
                     Count = table.Column<int>(type: "integer", nullable: false),
                     OwnerId = table.Column<string>(type: "text", nullable: true),
+                    IsHidden = table.Column<bool>(type: "boolean", nullable: false),
+                    CategoryType = table.Column<int>(type: "integer", nullable: false),
                     BlogId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
@@ -334,9 +336,29 @@ namespace Blog.Migrations
                 });
 
             migrationBuilder.InsertData(
+                table: "AspNetRoles",
+                columns: new[] { "Id", "ConcurrencyStamp", "Name", "NormalizedName" },
+                values: new object[,]
+                {
+                    { "0b19edc3-5c37-4192-a01a-b7b4309fb321", "1bc3a18c-32c1-494d-b69d-9a74f4795ac0", "Blogger", "BLOGGER" },
+                    { "53a23392-63e5-49aa-a04d-6e73726d5e11", "71922fd6-6f2b-4f20-8040-22d71b6e984f", "Admin", "ADMIN" },
+                    { "aed07505-c967-4c47-b403-1d62e19ea7d0", "336671d9-503c-4522-baed-dad8a8bab86a", "Basic", "BASIC" }
+                });
+
+            migrationBuilder.InsertData(
                 table: "AspNetUsers",
                 columns: new[] { "Id", "AccessFailedCount", "ConcurrencyStamp", "DisplayName", "Email", "EmailConfirmed", "FullName", "LockoutEnabled", "LockoutEnd", "NormalizedEmail", "NormalizedUserName", "PasswordHash", "PhoneNumber", "PhoneNumberConfirmed", "SecurityStamp", "TwoFactorEnabled", "UserName" },
-                values: new object[] { "7cafdc8c-dbb4-42d7-877d-534bb57998c6", 0, "ae0fe4bd-cd57-450c-abfd-3426bf1102aa", "Jakal", "test@local.com", true, "Jake Jeon", true, null, "TEST@LOCAL.COM", "TEST@LOCAL.COM", "AQAAAAEAACcQAAAAEOkocHMDnr1m69CBryi0B9SRqdaELZn9MSI1rZ4QtNruKGUrBxf/oM7vLibo1CmpcQ==", null, false, "UDAQGSO7AXESNGWWZM5CJYTVR47QG6LP", false, "test@local.com" });
+                values: new object[] { "7cafdc8c-dbb4-42d7-877d-534bb57998c6", 0, "ae0fe4bd-cd57-450c-abfd-3426bf1102aa", "Jake", "test@local.com", true, "Jake Jeon", true, null, "TEST@LOCAL.COM", "TEST@LOCAL.COM", "AQAAAAEAACcQAAAAEOkocHMDnr1m69CBryi0B9SRqdaELZn9MSI1rZ4QtNruKGUrBxf/oM7vLibo1CmpcQ==", null, false, "UDAQGSO7AXESNGWWZM5CJYTVR47QG6LP", false, "test@local.com" });
+
+            migrationBuilder.InsertData(
+                table: "AspNetUserRoles",
+                columns: new[] { "RoleId", "UserId" },
+                values: new object[,]
+                {
+                    { "0b19edc3-5c37-4192-a01a-b7b4309fb321", "7cafdc8c-dbb4-42d7-877d-534bb57998c6" },
+                    { "53a23392-63e5-49aa-a04d-6e73726d5e11", "7cafdc8c-dbb4-42d7-877d-534bb57998c6" },
+                    { "aed07505-c967-4c47-b403-1d62e19ea7d0", "7cafdc8c-dbb4-42d7-877d-534bb57998c6" }
+                });
 
             migrationBuilder.InsertData(
                 table: "Blogs",
@@ -345,8 +367,8 @@ namespace Blog.Migrations
 
             migrationBuilder.InsertData(
                 table: "Categories",
-                columns: new[] { "Id", "BlogId", "Count", "Name", "OwnerId" },
-                values: new object[] { 1, 1, 0, "General", "7cafdc8c-dbb4-42d7-877d-534bb57998c6" });
+                columns: new[] { "Id", "BlogId", "CategoryType", "Count", "IsHidden", "Name", "OwnerId" },
+                values: new object[] { 1, 1, 1, 0, false, "General", "7cafdc8c-dbb4-42d7-877d-534bb57998c6" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Articles_AuthorId",

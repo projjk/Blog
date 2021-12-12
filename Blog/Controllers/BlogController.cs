@@ -1,5 +1,3 @@
-using System.Diagnostics;
-using System.Security.Cryptography;
 using AutoMapper;
 using Blog.Areas.Identity.Data;
 using Blog.Data;
@@ -7,9 +5,7 @@ using Blog.Models;
 using Blog.ViewModels;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Microsoft.EntityFrameworkCore;
-using System.Security.Principal;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 
@@ -23,9 +19,11 @@ public class BlogController : Controller
     private readonly UserManager<BlogUser> _userManager;
     private readonly BlogIdentityDbContext _db;
     private readonly IConfiguration _configuration;
+    private readonly SignInManager<BlogUser> _signInManager;
 
     public BlogController(ILogger<BlogController> logger, ISqlBlogData repository, IMapper mapper,
-        UserManager<BlogUser> userManager, BlogIdentityDbContext db, IConfiguration configuration)
+        UserManager<BlogUser> userManager, BlogIdentityDbContext db, IConfiguration configuration,
+        SignInManager<BlogUser> signInManager)
     {
         _logger = logger;
         _repository = repository;
@@ -33,6 +31,7 @@ public class BlogController : Controller
         _userManager = userManager;
         _db = db;
         _configuration = configuration;
+        _signInManager = signInManager;
     }
 
     public async Task<IActionResult> Index(string blogAddress)
@@ -68,7 +67,7 @@ public class BlogController : Controller
         return View(blog);
     }
 
-    [Authorize]
+    [Authorize(Roles = "Blogger")]
     public async Task<IActionResult> Write()
     {
         var model = new BlogWriteViewModel();
@@ -85,11 +84,11 @@ public class BlogController : Controller
     }
 
     [HttpPost]
-    [Authorize]
+    [Authorize(Roles = "Blogger")]
     public async Task<IActionResult> Write(BlogWriteViewModel model)
     {
         BlogUser? user;
-        
+
         if (!ModelState.IsValid)
         {
             user = await _db.Users.SingleOrDefaultAsync(x => x.Id == _userManager.GetUserId(User));
@@ -119,6 +118,7 @@ public class BlogController : Controller
             ModelState.AddModelError("CategoryId", "You selected a category that isn't set by you.");
             return View(model);
         }
+
         category.Count++;
 
         // URL
@@ -170,7 +170,8 @@ public class BlogController : Controller
         _repository.CreateArticle(article);
         return RedirectToAction("Index");
     }
-
+    
+    [Authorize(Roles = "Blogger")]
     public IActionResult Edit(int id)
     {
         return View();
@@ -192,7 +193,7 @@ public class BlogController : Controller
     public async Task<IActionResult> Create(BlogCreateViewModel model)
     {
         if (!ModelState.IsValid) return View(model);
-        
+
         model.BlogAddress = model.BlogAddress.ToLower();
         var addressBlackList = new[]
             { "create", "view", "cancel", "edit", "manage", "delete", "post", "jake", "admin", "view" };
@@ -240,8 +241,9 @@ public class BlogController : Controller
         blog.Categories = new List<Category>
             { new Category { Name = "General", Count = 0, Owner = user, CategoryType = CategoryTypeEnum.View } };
         _repository.CreateBlog(blog);
+        await _userManager.AddToRoleAsync(user, Roles.Blogger.ToString());
+        await _signInManager.RefreshSignInAsync(user); // to refresh the role claim
         return RedirectToAction("CreateComplete");
-
     }
 
     public IActionResult CreateComplete()
@@ -250,6 +252,7 @@ public class BlogController : Controller
         return View();
     }
 
+    [Authorize(Roles = "Blogger")]
     public IActionResult Manage()
     {
         return View();
