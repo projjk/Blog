@@ -1,9 +1,6 @@
-using Blog.Areas.Identity.Data;
 using Blog.Models;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
-using Blog = Blog.Models.Blog;
 
 namespace Blog.Areas.Identity.Data;
 
@@ -62,7 +59,9 @@ public class BlogIdentityDbContext : IdentityDbContext<BlogUser>
             Name = "General",
             Count = 0,
             OwnerId = "7cafdc8c-dbb4-42d7-877d-534bb57998c6",
-            BlogId = 1
+            BlogId = 1,
+            IsHidden = false,
+            CategoryType = CategoryTypeEnum.View
         });
     }
 }

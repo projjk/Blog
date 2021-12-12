@@ -90,9 +90,9 @@ public class BlogController : Controller
     {
         var user = await _db.Users
             .Include(x => x.Blog)
-            .ThenInclude(i => i.Articles)
+            .ThenInclude(i => i!.Articles)
             .Include(x => x.Blog)
-            .ThenInclude(i => i.Tags)
+            .ThenInclude(i => i!.Tags)
             .SingleOrDefaultAsync(x => x.Id == _userManager.GetUserId(User));
 
         // Blog
@@ -234,7 +234,7 @@ public class BlogController : Controller
             var blog = _mapper.Map<Models.Blog>(model);
             user.Blog = blog;
             blog.Owner = user;
-            blog.Categories = new List<Category> { new Category { Name = "General", Count = 0, Owner = user } };
+            blog.Categories = new List<Category> { new Category { Name = "General", Count = 0, Owner = user, CategoryType = CategoryTypeEnum.View} };
             _repository.CreateBlog(blog);
             return RedirectToAction("CreateComplete");
         }
