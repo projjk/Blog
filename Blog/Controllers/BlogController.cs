@@ -88,7 +88,16 @@ public class BlogController : Controller
     [Authorize]
     public async Task<IActionResult> Write(BlogWriteViewModel model)
     {
-        var user = await _db.Users
+        BlogUser? user;
+        
+        if (!ModelState.IsValid)
+        {
+            user = await _db.Users.SingleOrDefaultAsync(x => x.Id == _userManager.GetUserId(User));
+            model.Categories = await _db.Categories.Where(d => d.Owner == user).ToListAsync();
+            return View(model);
+        }
+
+        user = await _db.Users
             .Include(x => x.Blog)
             .ThenInclude(i => i!.Articles)
             .Include(x => x.Blog)
@@ -113,13 +122,7 @@ public class BlogController : Controller
         category.Count++;
 
         // URL
-        if (model.Url == null)
-        {
-            ModelState.AddModelError("Url", "Please enter your article's address");
-            return View(model);
-        }
-
-        var m = Regex.Match(model.Url, @"^[\w-]+$", RegexOptions.IgnoreCase);
+        var m = Regex.Match(model.Url!, @"^[\w-]+$", RegexOptions.IgnoreCase);
         if (!m.Success)
         {
             ModelState.AddModelError("Url", "There's an unsupported letter in your address.");
@@ -154,7 +157,7 @@ public class BlogController : Controller
                 }
                 else
                 {
-                    newTag = new Tag { Name = tagName, Count = 1};
+                    newTag = new Tag { Name = tagName, Count = 1 };
                 }
 
                 user.Blog.Tags.Add(newTag);
@@ -188,58 +191,57 @@ public class BlogController : Controller
     [Authorize]
     public async Task<IActionResult> Create(BlogCreateViewModel model)
     {
-        if (ModelState.IsValid)
+        if (!ModelState.IsValid) return View(model);
+        
+        model.BlogAddress = model.BlogAddress.ToLower();
+        var addressBlackList = new[]
+            { "create", "view", "cancel", "edit", "manage", "delete", "post", "jake", "admin", "view" };
+        var titleBlackList = new[] { "fuck", "suck" };
+        if (addressBlackList.FirstOrDefault(elem => model.BlogAddress.Contains(elem)) != null
+            || titleBlackList.FirstOrDefault(elem => model.BlogAddress.Contains(elem)) != null)
         {
-            model.BlogAddress = model.BlogAddress.ToLower();
-            var addressBlackList = new[]
-                { "create", "view", "cancel", "edit", "manage", "delete", "post", "jake", "admin", "view" };
-            var titleBlackList = new[] { "fuck", "suck" };
-            if (addressBlackList.FirstOrDefault(elem => model.BlogAddress.Contains(elem)) != null
-                || titleBlackList.FirstOrDefault(elem => model.BlogAddress.Contains(elem)) != null)
-            {
-                ModelState.AddModelError("BlogAddress", "The address contains forbidden words.");
-                return View(model);
-            }
-
-            if (titleBlackList.FirstOrDefault(elem => model.BlogTitle.Contains(elem)) != null)
-            {
-                ModelState.AddModelError("BlogTitle", "The title contains forbidden words.");
-                return View(model);
-            }
-
-            var exist = await _db.Blogs.FirstOrDefaultAsync(b => b.BlogAddress == model.BlogAddress);
-            if (exist != null)
-            {
-                ModelState.AddModelError("BlogAddress",
-                    "This address is already used by someone. Try with another one.");
-                return View(model);
-            }
-
-            var user = await _db.Users.Include(x => x.Blog)
-                .SingleOrDefaultAsync(x => x.Id == _userManager.GetUserId(User));
-            if (user == null)
-            {
-                ModelState.AddModelError("BlogTitle", "Only members can create a blog.");
-                return View(model);
-            }
-
-            if (user.Blog != null)
-            {
-                // this block should not be accessed.
-                ModelState.AddModelError("BlogTitle", "You already own your blog.");
-                _logger.LogCritical("Cannot retrieve a user info during blog creation.");
-                return View(model);
-            }
-
-            var blog = _mapper.Map<Models.Blog>(model);
-            user.Blog = blog;
-            blog.Owner = user;
-            blog.Categories = new List<Category> { new Category { Name = "General", Count = 0, Owner = user, CategoryType = CategoryTypeEnum.View} };
-            _repository.CreateBlog(blog);
-            return RedirectToAction("CreateComplete");
+            ModelState.AddModelError("BlogAddress", "The address contains forbidden words.");
+            return View(model);
         }
 
-        return View(model);
+        if (titleBlackList.FirstOrDefault(elem => model.BlogTitle.Contains(elem)) != null)
+        {
+            ModelState.AddModelError("BlogTitle", "The title contains forbidden words.");
+            return View(model);
+        }
+
+        var exist = await _db.Blogs.FirstOrDefaultAsync(b => b.BlogAddress == model.BlogAddress);
+        if (exist != null)
+        {
+            ModelState.AddModelError("BlogAddress",
+                "This address is already used by someone. Try with another one.");
+            return View(model);
+        }
+
+        var user = await _db.Users.Include(x => x.Blog)
+            .SingleOrDefaultAsync(x => x.Id == _userManager.GetUserId(User));
+        if (user == null)
+        {
+            ModelState.AddModelError("BlogTitle", "Only members can create a blog.");
+            return View(model);
+        }
+
+        if (user.Blog != null)
+        {
+            // this block should not be accessed.
+            ModelState.AddModelError("BlogTitle", "You already own your blog.");
+            _logger.LogCritical("Cannot retrieve a user info during blog creation.");
+            return View(model);
+        }
+
+        var blog = _mapper.Map<Models.Blog>(model);
+        user.Blog = blog;
+        blog.Owner = user;
+        blog.Categories = new List<Category>
+            { new Category { Name = "General", Count = 0, Owner = user, CategoryType = CategoryTypeEnum.View } };
+        _repository.CreateBlog(blog);
+        return RedirectToAction("CreateComplete");
+
     }
 
     public IActionResult CreateComplete()

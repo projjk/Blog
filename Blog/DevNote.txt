@@ -1,3 +1,4 @@
 1. AntiForgeryToken for form submission
 2. CKEditor / BBCodes
 3. Identity Setup (email, SSO)
+4. Check several screen resolutions.
