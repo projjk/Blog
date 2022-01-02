@@ -172,6 +172,24 @@ namespace Blog.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "ArticleTag",
+                columns: table => new
+                {
+                    ArticlesId = table.Column<int>(type: "integer", nullable: false),
+                    TagsId = table.Column<int>(type: "integer", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ArticleTag", x => new { x.ArticlesId, x.TagsId });
+                    table.ForeignKey(
+                        name: "FK_ArticleTag_Tags_TagsId",
+                        column: x => x.TagsId,
+                        principalTable: "Tags",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "Blogs",
                 columns: table => new
                 {
@@ -181,7 +199,8 @@ namespace Blog.Migrations
                     IsHidden = table.Column<bool>(type: "boolean", nullable: false),
                     VisitorCounter = table.Column<int>(type: "integer", nullable: false),
                     BlogTitle = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: false),
-                    BlogAddress = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false)
+                    BlogAddress = table.Column<string>(type: "character varying(16)", maxLength: 16, nullable: false),
+                    DefaultCategoryId = table.Column<int>(type: "integer", nullable: false)
                 },
                 constraints: table =>
                 {
@@ -229,6 +248,7 @@ namespace Blog.Migrations
                     OwnerId = table.Column<string>(type: "text", nullable: true),
                     IsHidden = table.Column<bool>(type: "boolean", nullable: false),
                     CategoryType = table.Column<int>(type: "integer", nullable: false),
+                    ItemsPerPage = table.Column<int>(type: "integer", nullable: false),
                     BlogId = table.Column<int>(type: "integer", nullable: true)
                 },
                 constraints: table =>
@@ -279,30 +299,6 @@ namespace Blog.Migrations
                         name: "FK_Articles_Categories_CategoryId",
                         column: x => x.CategoryId,
                         principalTable: "Categories",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "ArticleTag",
-                columns: table => new
-                {
-                    ArticlesId = table.Column<int>(type: "integer", nullable: false),
-                    TagsId = table.Column<int>(type: "integer", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_ArticleTag", x => new { x.ArticlesId, x.TagsId });
-                    table.ForeignKey(
-                        name: "FK_ArticleTag_Articles_ArticlesId",
-                        column: x => x.ArticlesId,
-                        principalTable: "Articles",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                    table.ForeignKey(
-                        name: "FK_ArticleTag_Tags_TagsId",
-                        column: x => x.TagsId,
-                        principalTable: "Tags",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -362,13 +358,13 @@ namespace Blog.Migrations
 
             migrationBuilder.InsertData(
                 table: "Blogs",
-                columns: new[] { "Id", "BlogAddress", "BlogTitle", "IsHidden", "OwnerForeignKey", "VisitorCounter" },
-                values: new object[] { 1, "jake", "In the Matrix", false, "7cafdc8c-dbb4-42d7-877d-534bb57998c6", 0 });
+                columns: new[] { "Id", "BlogAddress", "BlogTitle", "DefaultCategoryId", "IsHidden", "OwnerForeignKey", "VisitorCounter" },
+                values: new object[] { 1, "jake", "In the Matrix", 1, false, "7cafdc8c-dbb4-42d7-877d-534bb57998c6", 0 });
 
             migrationBuilder.InsertData(
                 table: "Categories",
-                columns: new[] { "Id", "BlogId", "CategoryType", "Count", "IsHidden", "Name", "OwnerId" },
-                values: new object[] { 1, 1, 1, 0, false, "General", "7cafdc8c-dbb4-42d7-877d-534bb57998c6" });
+                columns: new[] { "Id", "BlogId", "CategoryType", "Count", "IsHidden", "ItemsPerPage", "Name", "OwnerId" },
+                values: new object[] { 1, 1, 1, 0, false, 3, "General", "7cafdc8c-dbb4-42d7-877d-534bb57998c6" });
 
             migrationBuilder.CreateIndex(
                 name: "IX_Articles_AuthorId",
@@ -428,6 +424,11 @@ namespace Blog.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
+                name: "IX_Blogs_DefaultCategoryId",
+                table: "Blogs",
+                column: "DefaultCategoryId");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_Blogs_OwnerForeignKey",
                 table: "Blogs",
                 column: "OwnerForeignKey",
@@ -457,10 +458,30 @@ namespace Blog.Migrations
                 name: "IX_Comments_BlogUserId",
                 table: "Comments",
                 column: "BlogUserId");
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_ArticleTag_Articles_ArticlesId",
+                table: "ArticleTag",
+                column: "ArticlesId",
+                principalTable: "Articles",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Cascade);
+
+            migrationBuilder.AddForeignKey(
+                name: "FK_Blogs_Categories_DefaultCategoryId",
+                table: "Blogs",
+                column: "DefaultCategoryId",
+                principalTable: "Categories",
+                principalColumn: "Id",
+                onDelete: ReferentialAction.Cascade);
         }
 
         protected override void Down(MigrationBuilder migrationBuilder)
         {
+            migrationBuilder.DropForeignKey(
+                name: "FK_Categories_Blogs_BlogId",
+                table: "Categories");
+
             migrationBuilder.DropTable(
                 name: "ArticleTag");
 
@@ -495,10 +516,10 @@ namespace Blog.Migrations
                 name: "Articles");
 
             migrationBuilder.DropTable(
-                name: "Categories");
+                name: "Blogs");
 
             migrationBuilder.DropTable(
-                name: "Blogs");
+                name: "Categories");
 
             migrationBuilder.DropTable(
                 name: "AspNetUsers");

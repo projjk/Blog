@@ -12,7 +12,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Blog.Migrations
 {
     [DbContext(typeof(BlogIdentityDbContext))]
-    [Migration("20211212114047_init")]
+    [Migration("20220102232133_init")]
     partial class init
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -200,6 +200,9 @@ namespace Blog.Migrations
                         .HasMaxLength(50)
                         .HasColumnType("character varying(50)");
 
+                    b.Property<int>("DefaultCategoryId")
+                        .HasColumnType("integer");
+
                     b.Property<bool>("IsHidden")
                         .HasColumnType("boolean");
 
@@ -212,6 +215,8 @@ namespace Blog.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("DefaultCategoryId");
+
                     b.HasIndex("OwnerForeignKey")
                         .IsUnique();
 
@@ -223,6 +228,7 @@ namespace Blog.Migrations
                             Id = 1,
                             BlogAddress = "jake",
                             BlogTitle = "In the Matrix",
+                            DefaultCategoryId = 0,
                             IsHidden = false,
                             OwnerForeignKey = "7cafdc8c-dbb4-42d7-877d-534bb57998c6",
                             VisitorCounter = 0
@@ -249,6 +255,9 @@ namespace Blog.Migrations
                     b.Property<bool>("IsHidden")
                         .HasColumnType("boolean");
 
+                    b.Property<int>("ItemsPerPage")
+                        .HasColumnType("integer");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -273,6 +282,7 @@ namespace Blog.Migrations
                             CategoryType = 1,
                             Count = 0,
                             IsHidden = false,
+                            ItemsPerPage = 3,
                             Name = "General",
                             OwnerId = "7cafdc8c-dbb4-42d7-877d-534bb57998c6"
                         });
@@ -562,11 +572,19 @@ namespace Blog.Migrations
 
             modelBuilder.Entity("Blog.Models.Blog", b =>
                 {
+                    b.HasOne("Blog.Models.Category", "DefaultCategory")
+                        .WithMany()
+                        .HasForeignKey("DefaultCategoryId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
                     b.HasOne("Blog.Areas.Identity.Data.BlogUser", "Owner")
                         .WithOne("Blog")
                         .HasForeignKey("Blog.Models.Blog", "OwnerForeignKey")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+
+                    b.Navigation("DefaultCategory");
 
                     b.Navigation("Owner");
                 });

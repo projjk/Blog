@@ -13,4 +13,5 @@ public class Category
     public BlogUser Owner { get; set; } = null!;
     public bool IsHidden { get; set; }
     public CategoryTypeEnum CategoryType { get; set; }
+    public int ItemsPerPage { get; set; }
 }

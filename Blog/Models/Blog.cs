@@ -21,6 +21,8 @@ public class Blog
     
     [StringLength(16)]
     public string BlogAddress { get; set; } = null!;
+
+    public Category DefaultCategory { get; set; } = null!;
     public ICollection<Article>? Articles { get; set; }
     public ICollection<Category> Categories { get; set; } = null!;
     public ICollection<Tag>? Tags { get; set; }

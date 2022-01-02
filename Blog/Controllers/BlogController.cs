@@ -34,10 +34,12 @@ public class BlogController : Controller
         _signInManager = signInManager;
     }
 
-    public async Task<IActionResult> Index(string blogAddress)
+    public async Task<IActionResult> Index(string blogAddress, int? page, string? tag, string? category)
     {
         Models.Blog? blog;
+        Category currentCategory;
 
+        // blogAddress
         if (string.IsNullOrWhiteSpace(blogAddress))
         {
             if (!int.TryParse(_configuration["Blog:DefaultBlogId"], out int blogId))
@@ -45,7 +47,9 @@ public class BlogController : Controller
                 blogId = 1;
             }
 
-            blog = await _db.Blogs.Include(b => b.Owner).FirstOrDefaultAsync(b => b.Id == blogId);
+            blog = await _db.Blogs.Include(b => b.Owner)
+                .Include(b => b.DefaultCategory)
+                .FirstOrDefaultAsync(b => b.Id == blogId);
 
             if (blog == null)
             {
@@ -56,12 +60,53 @@ public class BlogController : Controller
         }
         else
         {
-            blog = await _db.Blogs.Include(b => b.Owner).FirstOrDefaultAsync(b => b.BlogAddress == blogAddress);
+            blog = await _db.Blogs.Include(b => b.Owner)
+                .Include(b => b.DefaultCategory)
+                .FirstOrDefaultAsync(b => b.BlogAddress == blogAddress);
             if (blog == null)
             {
                 ViewBag.ErrorMessage = "There's no blog with that address.";
                 return View("Error");
             }
+        }
+
+        // category
+        if (string.IsNullOrWhiteSpace(category))
+        { 
+            currentCategory = blog.DefaultCategory;
+        }
+        else
+        {
+            currentCategory = blog.Categories.FirstOrDefault(c => c.Name.ToUpper() == category.ToUpper()) ?? blog.DefaultCategory;
+        }
+        
+        // viewtype
+        switch (currentCategory.CategoryType)
+        {
+            case CategoryTypeEnum.List:
+                break;
+            case CategoryTypeEnum.View:
+                var model = _mapper.Map<BlogIndexIndex>(blog);
+                PaginatedList<Article>? articles = null;
+                var blogArticles = _db.Entry(blog).Collection(x => x.Articles)
+                    .Query()
+                    .Where(a => a.Category.Name.ToUpper() == currentCategory.Name.ToUpper())
+                    .Include(a => a.Author)
+                    .Include(a => a.Category)
+                    .Include(a => a.Comments)
+                    .Include(a => a.Tags)
+                    .OrderByDescending(a => a.PostDate)
+                    .AsNoTracking();
+                articles =
+                    await PaginatedList<Article>.CreateAsync(blogArticles, page ?? 1,
+                        currentCategory.ItemsPerPage);
+
+                model.Articles = articles;
+                model.Category = currentCategory;
+                return View("IndexIndex", model);
+
+            case CategoryTypeEnum.Gallery:
+                break;
         }
 
         return View(blog);
@@ -170,7 +215,7 @@ public class BlogController : Controller
         _repository.CreateArticle(article);
         return RedirectToAction("Index");
     }
-    
+
     [Authorize(Roles = "Blogger")]
     public IActionResult Edit(int id)
     {
@@ -238,9 +283,13 @@ public class BlogController : Controller
         var blog = _mapper.Map<Models.Blog>(model);
         user.Blog = blog;
         blog.Owner = user;
-        blog.Categories = new List<Category>
-            { new Category { Name = "General", Count = 0, Owner = user, CategoryType = CategoryTypeEnum.View } };
+        var defaultCategory = new Category
+            { Name = "General", Count = 0, Owner = user, CategoryType = CategoryTypeEnum.View };
+        blog.DefaultCategory = defaultCategory;
         _repository.CreateBlog(blog);
+        blog.Categories = new List<Category>
+            { defaultCategory };
+        _repository.Commit(); // have to save separately in order to avoid a circular dependency error about categories.
         await _userManager.AddToRoleAsync(user, Roles.Blogger.ToString());
         await _signInManager.RefreshSignInAsync(user); // to refresh the role claim
         return RedirectToAction("CreateComplete");

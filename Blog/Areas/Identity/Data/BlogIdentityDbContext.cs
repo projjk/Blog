@@ -88,18 +88,22 @@ public class BlogIdentityDbContext : IdentityDbContext<BlogUser>
             RoleId = bloggerRoleId,
             UserId = adminUserId
         });
-
+        
+        
         // seed a default blog
-        builder.Entity<Models.Blog>().HasData(new Models.Blog
+        builder.Entity<Models.Blog>().HasData(new 
         {
             Id = 1,
             OwnerForeignKey = adminUserId,
             IsHidden = false,
             VisitorCounter = 0,
             BlogTitle = "In the Matrix",
-            BlogAddress = "jake"
+            BlogAddress = "jake",
+            DefaultCategoryId = 0
+            // after migration, must edit DefaultCategoryId value from 0 to 1 in the migration .cs file
         });
 
+        
         // seed a default category
         builder.Entity<Category>().HasData(new 
         {
@@ -109,6 +113,7 @@ public class BlogIdentityDbContext : IdentityDbContext<BlogUser>
             OwnerId = adminUserId,
             BlogId = 1,
             IsHidden = false,
+            ItemsPerPage = 3,
             CategoryType = CategoryTypeEnum.View
         });
     }
