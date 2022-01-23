@@ -193,6 +193,10 @@ public class BlogController : Controller
             foreach (string s in model.Tags.Split(','))
             {
                 var tagName = s.Trim().ToUpper();
+                if (String.IsNullOrWhiteSpace(tagName))
+                {
+                    continue;
+                }
                 Tag newTag;
                 var oldTag = await _db.Tags.SingleOrDefaultAsync(t => t.Name == tagName);
                 if (oldTag != null)
