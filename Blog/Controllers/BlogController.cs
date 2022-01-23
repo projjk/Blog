@@ -65,7 +65,8 @@ public class BlogController : Controller
         {
             blog = await _db.Blogs.Include(b => b.Owner)
                 .Include(b => b.DefaultCategory)
-                .FirstOrDefaultAsync(b => b.BlogAddress == blogAddress);
+                .Where(b => EF.Functions.Collate(b.BlogAddress, "case_insensitive") == blogAddress)
+                .FirstOrDefaultAsync();
             if (blog == null)
             {
                 ViewBag.ErrorMessage = "There's no blog with that address.";
@@ -80,8 +81,7 @@ public class BlogController : Controller
         }
         else
         {
-            currentCategory = blog.Categories.FirstOrDefault(c => c.Name.ToUpper() == category.ToUpper()) ??
-                              blog.DefaultCategory;
+            currentCategory = blog.Categories.FirstOrDefault(c => String.Equals(c.Name, category, StringComparison.InvariantCultureIgnoreCase)) ?? blog.DefaultCategory;
         }
 
         // viewtype
@@ -94,16 +94,24 @@ public class BlogController : Controller
                 PaginatedList<Article>? articles = null;
                 var blogArticles = _db.Entry(blog).Collection(x => x.Articles)
                     .Query()
-                    .Where(a => a.Category.Name.ToUpper() == currentCategory.Name.ToUpper())
+                    .Where(a => EF.Functions.Collate(a.Category.Name, "case_insensitive") == currentCategory.Name)
                     .Include(a => a.Author)
                     .Include(a => a.Category)
-                    .Include(a => a.Comments.OrderBy(c => c.Id))
+                    .Include(a => a.Comments)
                     .Include(a => a.Tags)
                     .OrderByDescending(a => a.PostDate)
                     .AsNoTracking();
                 articles =
                     await PaginatedList<Article>.CreateAsync(blogArticles, page ?? 1,
                         currentCategory.ItemsPerPage);
+
+                foreach (var article in articles)
+                {
+                    if (article.Body.Length > 1000)
+                    {
+                        article.Body = article.Body.Substring(0, 1000);
+                    }
+                }
 
                 model.Articles = articles;
                 model.Category = currentCategory;
@@ -237,10 +245,10 @@ public class BlogController : Controller
             .Include(a => a.Author.Blog)
             .Include(a => a.Category)
             .Include(a => a.Tags)
-            .Include(a => a.Comments.OrderBy(c => c.Id))
-            .FirstOrDefaultAsync(a =>
-                a.Url.ToUpper() == articleUrl.ToUpper() &&
-                a.Author.Blog!.BlogAddress.ToUpper() == blogAddress.ToUpper());
+            .Include(a => a.Comments!.OrderBy(c => c.Id))
+            .Where(a => EF.Functions.Collate(a.Url, "case_insensitive") == articleUrl
+                        && EF.Functions.Collate(a.Author.Blog!.BlogAddress, "case_insensitive") == blogAddress)
+            .FirstOrDefaultAsync();
         if (article == null)
         {
             ViewBag.ErrorMessage = "There's no article with that address.";
