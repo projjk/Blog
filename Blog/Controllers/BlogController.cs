@@ -107,7 +107,7 @@ public class BlogController : Controller
 
                 model.Articles = articles;
                 model.Category = currentCategory;
-                return View("IndexIndex", model);
+                return View("IndexView", model);
 
             case CategoryTypeEnum.Gallery:
                 break;
