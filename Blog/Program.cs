@@ -49,6 +49,10 @@ app.UseAuthorization();
 
 app.MapControllerRoute(
     name: "blogCreate",
+    pattern: "Blog/Write",
+    defaults: new { controller = "Blog", action = "Write" });
+app.MapControllerRoute(
+    name: "blogCreate",
     pattern: "Blog/Create",
     defaults: new { controller = "Blog", action = "Create" });
 app.MapControllerRoute(
