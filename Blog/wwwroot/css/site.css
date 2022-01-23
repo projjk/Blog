@@ -16,3 +16,12 @@ html {
 body {
   margin-bottom: 60px;
 }
+
+.comments:nth-child(even) {
+  background-color: rgb(248,249,250);
+}
+
+.datetime {
+  font-size: 0.9rem;
+  font-style: italic;
+}
