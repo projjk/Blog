@@ -21,11 +21,10 @@
                 @foreach (var item in Model.Articles)
                 {
                     <div class="row mt-5">
-                        <div class="col bg-light">@item.Title</div>
+                        <div class="col bg-light fs-5">@item.Title</div>
                     </div>
                     <div class="row">
-                        <div class="col-3">@item.Author.DisplayName</div>
-                        <div class="col text-end">@item.PostDate</div>
+                        <div class="col text-end fw-light">By @item.Author.DisplayName - @item.PostDate</div>
                     </div>
                     <div class="row">
                         <div class="col">@item.Body</div>

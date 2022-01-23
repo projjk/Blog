@@ -1,3 +1,4 @@
+using System.Security.Cryptography;
 using AutoMapper;
 using Blog.Areas.Identity.Data;
 using Blog.Data;
@@ -8,6 +9,8 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Cryptography.KeyDerivation;
+
 
 namespace Blog.Controllers;
 
@@ -72,14 +75,15 @@ public class BlogController : Controller
 
         // category
         if (string.IsNullOrWhiteSpace(category))
-        { 
+        {
             currentCategory = blog.DefaultCategory;
         }
         else
         {
-            currentCategory = blog.Categories.FirstOrDefault(c => c.Name.ToUpper() == category.ToUpper()) ?? blog.DefaultCategory;
+            currentCategory = blog.Categories.FirstOrDefault(c => c.Name.ToUpper() == category.ToUpper()) ??
+                              blog.DefaultCategory;
         }
-        
+
         // viewtype
         switch (currentCategory.CategoryType)
         {
@@ -93,7 +97,7 @@ public class BlogController : Controller
                     .Where(a => a.Category.Name.ToUpper() == currentCategory.Name.ToUpper())
                     .Include(a => a.Author)
                     .Include(a => a.Category)
-                    .Include(a => a.Comments)
+                    .Include(a => a.Comments.OrderBy(c => c.Id))
                     .Include(a => a.Tags)
                     .OrderByDescending(a => a.PostDate)
                     .AsNoTracking();
@@ -197,6 +201,7 @@ public class BlogController : Controller
                 {
                     continue;
                 }
+
                 Tag newTag;
                 var oldTag = await _db.Tags.SingleOrDefaultAsync(t => t.Name == tagName);
                 if (oldTag != null)
@@ -226,9 +231,29 @@ public class BlogController : Controller
         return View();
     }
 
-    public IActionResult View(string blogAddress, string articleUrl)
+    public async Task<IActionResult> View(string blogAddress, string articleUrl)
     {
-        return View();
+        var article = await _db.Articles
+            .Include(a => a.Author.Blog)
+            .Include(a => a.Category)
+            .Include(a => a.Tags)
+            .Include(a => a.Comments.OrderBy(c => c.Id))
+            .FirstOrDefaultAsync(a =>
+                a.Url.ToUpper() == articleUrl.ToUpper() &&
+                a.Author.Blog!.BlogAddress.ToUpper() == blogAddress.ToUpper());
+        if (article == null)
+        {
+            ViewBag.ErrorMessage = "There's no article with that address.";
+            return View("Error");
+        }
+
+        var blog = article.Author.Blog;
+        var viewModel = _mapper.Map<BlogView>(article);
+        _mapper.Map(blog, viewModel);
+        article.ViewCount++;
+        blog!.VisitorCounter++;
+        _repository.Commit();
+        return View(viewModel);
     }
 
     [Authorize]
@@ -309,5 +334,88 @@ public class BlogController : Controller
     public IActionResult Manage()
     {
         return View();
+    }
+
+    [HttpPost]
+    public async Task<IActionResult> WriteComment(BlogWriteComment blogWriteComment)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View("Error");
+        }
+
+        var newComment = new Comment
+        {
+            Author = blogWriteComment.CommentAuthor,
+            Password = HashPassword(blogWriteComment.CommentPassword),
+            Body = blogWriteComment.CommentBody,
+            PostDate = DateTime.UtcNow
+        };
+        var article = await _db.Articles.Include(a => a.Comments)
+            .FirstOrDefaultAsync(a => a.Id == blogWriteComment.ArticleId);
+        if (article == null)
+        {
+            return View("Error");
+        }
+        article.Comments!.Add(newComment);
+        _repository.Commit();
+
+        
+        return RedirectToAction("View", new {blogAddress = blogWriteComment.BlogAddress, articleUrl = blogWriteComment.ArticleUrl});
+    }
+
+    private string HashPassword(string password)
+    {
+        const KeyDerivationPrf Pbkdf2Prf = KeyDerivationPrf.HMACSHA256;
+        const int Pbkdf2IterCount = 100000;
+        const int Pbkdf2SubkeyLength = 256 / 8; // 256 bits
+        const int SaltSize = 128 / 8; // 128 bits
+        
+        // generate a 128-bit salt using a cryptographically strong random sequence of nonzero values
+        byte[] salt = new byte[SaltSize];
+        using (var rngCsp = RandomNumberGenerator.Create())
+        {
+            rngCsp.GetNonZeroBytes(salt);
+        }
+
+        // derive a 256-bit subkey (use HMACSHA256 with 100,000 iterations)
+        byte[] subkey = KeyDerivation.Pbkdf2(
+            password: password,
+            salt: salt,
+            prf: Pbkdf2Prf,
+            iterationCount: Pbkdf2IterCount,
+            numBytesRequested: Pbkdf2SubkeyLength);
+
+        var outputBytes = new byte[1 + SaltSize + Pbkdf2SubkeyLength];
+        outputBytes[0] = 0x00; // format marker
+        Buffer.BlockCopy(salt, 0, outputBytes, 1, SaltSize);
+        Buffer.BlockCopy(subkey, 0, outputBytes, 1 + SaltSize, Pbkdf2SubkeyLength);
+        return Convert.ToBase64String(outputBytes);
+    }
+
+    private bool VerifyHashedPassword(string hashedPasswordString, string password)
+    {
+        const KeyDerivationPrf Pbkdf2Prf = KeyDerivationPrf.HMACSHA256;
+        const int Pbkdf2IterCount = 100000;
+        const int Pbkdf2SubkeyLength = 256 / 8; // 256 bits
+        const int SaltSize = 128 / 8; // 128 bits
+
+        byte[] hashedPassword = Convert.FromBase64String(hashedPasswordString);
+
+        // We know ahead of time the exact length of a valid hashed password payload.
+        if (hashedPassword.Length != 1 + SaltSize + Pbkdf2SubkeyLength)
+        {
+            return false; // bad size
+        }
+
+        byte[] salt = new byte[SaltSize];
+        Buffer.BlockCopy(hashedPassword, 1, salt, 0, salt.Length);
+
+        byte[] expectedSubkey = new byte[Pbkdf2SubkeyLength];
+        Buffer.BlockCopy(hashedPassword, 1 + salt.Length, expectedSubkey, 0, expectedSubkey.Length);
+
+        // Hash the incoming password and verify it
+        byte[] actualSubkey = KeyDerivation.Pbkdf2(password, salt, Pbkdf2Prf, Pbkdf2IterCount, Pbkdf2SubkeyLength);
+        return CryptographicOperations.FixedTimeEquals(actualSubkey, expectedSubkey);
     }
 }

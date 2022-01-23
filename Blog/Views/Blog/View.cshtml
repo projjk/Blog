@@ -1,8 +1,57 @@
 ﻿@{
-    ViewData["Title"] = "Blog View";
+    ViewData["Title"] = "";
 }
+@using BlogView = Blog.ViewModels.BlogView
+@using Blog.ViewModels
+@model BlogView
+<div class="container">
+    @if (Model != null)
+    {
+        <h1><a asp-controller="Blog" asp-action="Index" asp-route-blogAddress="@Model.BlogAddress" class="text-decoration-none text-dark"><i class="fs-3 fas fa-arrow-left"></i> @Model.BlogTitle</a></h1>
 
-<div class="text-center">
-    <h1 class="display-4">View Template</h1>
-    Change the Category structure.
+        <div id="article">
+            <div class="row mt-5">
+                <div class="col bg-light fw-bolder fs-3">@Model.Title</div>
+            </div>
+            <div class="row mt-2 mb-4">
+                <div class="col text-secondary">By <span class="text-dark">@Model.Owner.DisplayName</span> - @Model.PostDate</div>
+            </div>
+            <div class="row mb-5">
+                <div class="col">@Model.Body</div>
+            </div>
+            @if (Model.Tags!.Count != 0)
+            {
+                int count = 0;
+                <div class="row mb-3">
+                    <div class="col">
+                        @foreach (var tag in Model.Tags)
+                        {
+                            count++;
+                            <a asp-controller="Blog" asp-action="Index" asp-route-blogAddress="@Model.BlogAddress" asp-route-tag="@tag.Name" class="text-secondary">@tag.Name</a>
+                            @if (count != Model.Tags.Count)
+                            {
+                                @Html.Raw(", ")
+                                ;
+                            }
+                        }
+                    </div>
+                </div>
+            }
+            @foreach (var comment in Model.Comments!)
+            {
+                <div class="row comments mb-3">
+                    <div class="comment-header">
+                        <span class="fw-bold">@comment.Author</span><span class="ms-2 datetime text-secondary">@comment.PostDate</span>
+                    </div>
+                    <p class="comment-content mt-1">@comment.Body</p>
+                </div>
+            }
+            @await Html.PartialAsync("_WriteCommentPartial", new BlogWriteComment { BlogAddress = Model.BlogAddress, ArticleId = Model.Id, ArticleUrl = Model.Url })
+        </div>
+    }
 </div>
+
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial"/>
+}

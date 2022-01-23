@@ -1,0 +1,23 @@
+@using BlogWriteComment = Blog.ViewModels.BlogWriteComment
+@model BlogWriteComment
+
+<form asp-action="WriteComment" method="post">
+    <div class="row g-2">
+        <input asp-for="ArticleId" type="hidden"/>
+        <input asp-for="ArticleUrl" type="hidden"/>
+        <input asp-for="BlogAddress" type="hidden"/>
+        <div class="col">
+            <input asp-for="CommentAuthor" placeholder="Name" class="form-control"/>
+            <span asp-validation-for="CommentAuthor" class="text-danger"></span>
+        </div>
+        <div class="col">
+            <input asp-for="CommentPassword" placeholder="Password" class="form-control"/>
+            <span asp-validation-for="CommentPassword" class="text-danger"></span>
+        </div>
+        <div class="col-12 mt-1">
+            <textarea asp-for="CommentBody" placeholder="Comment" class="form-control" rows="3"></textarea>
+            <span asp-validation-for="CommentBody" class="text-danger"></span>
+            <button type="submit" class="btn btn-secondary mt-1 w-100">Post</button>
+        </div>
+    </div>
+</form>

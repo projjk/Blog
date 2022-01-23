@@ -21,6 +21,7 @@
 
     <ItemGroup>
       <Folder Include="Areas" />
+      <Folder Include="wwwroot\lib\fontawesome-5.15.4" />
     </ItemGroup>
 
 </Project>
