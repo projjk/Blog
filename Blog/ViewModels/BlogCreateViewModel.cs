@@ -13,5 +13,6 @@ public class BlogCreateViewModel
     [Required(ErrorMessage = "Please enter your blog's address")]
     [Display(Name = "Blog Address")]
     [StringLength(16, MinimumLength = 4)]
+    [RegularExpression(@"^[\w-]+$", ErrorMessage = "URL contains an unsupported letter.")]
     public string BlogAddress { get; set; } = null!;
 }
