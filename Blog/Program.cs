@@ -48,8 +48,16 @@ app.UseAuthorization();
 
 
 app.MapControllerRoute(
+    name: "blogIndexTag",
+    pattern: "Blog/{blogAddress}/tag/{tag}",
+    defaults: new { controller = "Blog", action = "Index" });
+app.MapControllerRoute(
+    name: "blogIndexCategory",
+    pattern: "Blog/{blogAddress}/category/{category}",
+    defaults: new { controller = "Blog", action = "Index" });
+app.MapControllerRoute(
     name: "blogAction",
-    pattern: "Blog/{action}",
+    pattern: "Blog/{action}/{articleId?}",
     defaults: new { controller = "Blog"});
 app.MapControllerRoute(
     name: "blogView",
