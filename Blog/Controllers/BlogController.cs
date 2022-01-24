@@ -322,7 +322,7 @@ public class BlogController : Controller
         user.Blog = blog;
         blog.Owner = user;
         var defaultCategory = new Category
-            { Name = "General", Count = 0, Owner = user, CategoryType = CategoryTypeEnum.View };
+            { Name = "General", Count = 0, Owner = user, ItemsPerPage = 3, CategoryType = CategoryTypeEnum.View };
         blog.DefaultCategory = defaultCategory;
         _repository.CreateBlog(blog);
         blog.Categories = new List<Category>
