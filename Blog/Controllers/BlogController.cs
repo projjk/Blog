@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text;
 using AutoMapper;
 using Blog.Areas.Identity.Data;
 using Blog.Data;
@@ -10,6 +11,7 @@ using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 
 namespace Blog.Controllers;
@@ -125,7 +127,7 @@ public class BlogController : Controller
     }
 
     [Authorize(Roles = "Blogger")]
-    public async Task<IActionResult> Write()
+    public async Task<IActionResult> Write(int? articleId)
     {
         var model = new BlogWriteViewModel();
         var user = await _db.Users.Include(x => x.Blog)
@@ -137,6 +139,34 @@ public class BlogController : Controller
         }
 
         model.Categories = await _db.Categories.Where(d => d.Owner == user).ToListAsync();
+
+        if (articleId > 0)
+        {
+            var fetchedArticle = await _db.Articles.Include(a => a.Tags).FirstOrDefaultAsync(a => a.Id == articleId);
+            if (fetchedArticle != null && user == fetchedArticle.Author)
+            {
+                _mapper.Map(fetchedArticle, model);
+
+                if (fetchedArticle.Tags != null)
+                {
+                    var sb = new StringBuilder();
+                    foreach (var tag in fetchedArticle.Tags)
+                    {
+                        if (sb.Length > 0)
+                        {
+                            sb.Append(',');
+                        }
+                        sb.Append(tag.Name);
+                    }
+
+                    model.Tags = sb.ToString();
+                }
+            }
+            else
+            {
+                return View("Error");
+            }
+        }
         return View(model);
     }
 
@@ -156,6 +186,8 @@ public class BlogController : Controller
         user = await _db.Users
             .Include(x => x.Blog)
             .ThenInclude(i => i!.Articles)
+            .Include(u => u.Blog.Articles)
+            .ThenInclude(a => a.Tags)
             .Include(x => x.Blog)
             .ThenInclude(i => i!.Tags)
             .SingleOrDefaultAsync(x => x.Id == _userManager.GetUserId(User));
@@ -186,15 +218,59 @@ public class BlogController : Controller
             return View(model);
         }
 
-        if (await _db.Articles.SingleOrDefaultAsync(a => a.Author == user && a.Url == model.Url) != null)
+        var addressBlackList = new[]
+            { "TAG", "CATEGORY", "WRITE", "EDIT", "DELETE" };
+        if (addressBlackList.FirstOrDefault(elem => String.Equals(elem, model.Url, StringComparison.OrdinalIgnoreCase)) != null)
+        {
+            ModelState.AddModelError("Url", "That address cannot be used.");
+            return View(model);
+        }
+
+        if (await _db.Articles.SingleOrDefaultAsync(a => a.Author == user && a.Url == model.Url && a.Id != model.Id) != null)
         {
             ModelState.AddModelError("Url", "There's a duplicate article address on your blog.");
             return View(model);
         }
 
-        var article = _mapper.Map<Article>(model);
-        article.Author = user;
-        article.PostDate = DateTime.UtcNow;
+        Article? article;
+        if (model.Id > 0)
+        {
+            article = await _db.Articles.Include(a => a.Tags).FirstOrDefaultAsync(a => a.Id == model.Id);
+            if (article != null && article.Author == user)
+            {
+                _mapper.Map(model, article);
+                article.LastUpdate = DateTime.UtcNow;
+                
+                // Remove old tags
+                if (article.Tags != null)
+                {
+                    foreach (var tag in article.Tags)
+                    {
+                        tag.Count--;
+                        article.Tags.Remove(tag);
+                        if (user.Blog.Articles!.FirstOrDefault(a => a.Tags != null && a.Tags.Contains(tag)) == null)
+                        {
+                            user.Blog.Tags!.Remove(tag);
+                            if (tag.Count <= 0)
+                            {
+                                _db.Tags.Remove(tag);
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                return View("Error");
+            }
+        }
+        else
+        {
+            article = _mapper.Map<Article>(model);
+            article.Author = user;
+            article.PostDate = DateTime.UtcNow;
+        }
+
         article.Category = category;
 
         // Tags
@@ -222,14 +298,28 @@ public class BlogController : Controller
                     newTag = new Tag { Name = tagName, Count = 1 };
                 }
 
-                user.Blog.Tags.Add(newTag);
-                article.Tags.Add(newTag);
+                if (article.Tags.FirstOrDefault(t => t.Id == newTag.Id) == null)
+                {
+                    article.Tags.Add(newTag);
+                }
+                if (user.Blog.Tags.FirstOrDefault(t => t.Id == newTag.Id) == null)
+                {
+                    user.Blog.Tags.Add(newTag);
+                }
             }
         }
 
         user.Blog.Articles ??= new List<Article>();
-        user.Blog.Articles.Add(article);
-        _repository.CreateArticle(article);
+
+        if (model.Id > 0)
+        {
+            _repository.Commit();
+        }
+        else
+        {
+            user.Blog.Articles.Add(article);
+            _repository.CreateArticle(article);
+        }
         return RedirectToRoute("blogView",
             new { blogAddress = user.Blog.BlogAddress, articleUrl = article.Url });
     }
@@ -284,13 +374,13 @@ public class BlogController : Controller
         if (addressBlackList.FirstOrDefault(elem => model.BlogAddress.Contains(elem)) != null
             || titleBlackList.FirstOrDefault(elem => model.BlogAddress.Contains(elem)) != null)
         {
-            ModelState.AddModelError("BlogAddress", "The address contains forbidden words.");
+            ModelState.AddModelError("BlogAddress", "The address contains a forbidden word.");
             return View(model);
         }
 
         if (titleBlackList.FirstOrDefault(elem => model.BlogTitle.Contains(elem)) != null)
         {
-            ModelState.AddModelError("BlogTitle", "The title contains forbidden words.");
+            ModelState.AddModelError("BlogTitle", "The title contains a forbidden word.");
             return View(model);
         }
 

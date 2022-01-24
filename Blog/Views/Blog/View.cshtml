@@ -3,7 +3,12 @@
 }
 @using BlogView = Blog.ViewModels.BlogView
 @using Blog.ViewModels
+@using Microsoft.AspNetCore.Identity
+@using Blog.Areas.Identity.Data
+@inject SignInManager<BlogUser> SignInManager
+@inject UserManager<BlogUser> UserManager
 @model BlogView
+
 <div class="container">
     @if (Model != null)
     {
@@ -15,6 +20,13 @@
             </div>
             <div class="row mt-2 mb-4">
                 <div class="col text-secondary">By <span class="text-dark">@Model.Owner.DisplayName</span> - @Model.PostDate</div>
+                @if (SignInManager.IsSignedIn(User) && User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")!.Value == Model.Owner.UserName)
+                {
+                    <div class="col text-end">
+                        <a asp-controller="Blog" asp-action="Write" asp-route-articleId="@Model.Id"><i class="far fa-edit"></i></a>
+                        <i class="far fa-trash-alt"></i>
+                    </div>
+                }
             </div>
             <div class="row mb-5">
                 <div class="col">@Model.Body</div>
@@ -27,11 +39,10 @@
                         @foreach (var tag in Model.Tags)
                         {
                             count++;
-                            <a asp-controller="Blog" asp-action="Index" asp-route-blogAddress="@Model.BlogAddress" asp-route-tag="@tag.Name" class="text-secondary">@tag.Name</a>
+                            <a asp-route="blog" asp-route-blogAddress="@Model.BlogAddress" asp-route-tag="@tag.Name" class="text-secondary">@tag.Name</a>
                             @if (count != Model.Tags.Count)
                             {
-                                @Html.Raw(", ")
-                                ;
+                                @:,
                             }
                         }
                     </div>

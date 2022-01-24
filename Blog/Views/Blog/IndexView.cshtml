@@ -41,7 +41,7 @@
                     @foreach (var tag in item.Tags)
                     {
                         count++;
-                        <a asp-controller="Blog" asp-action="Index" asp-route-blogAddress="@Model.BlogAddress" asp-route-tag="@tag.Name" class="text-secondary">@tag.Name</a>
+                        <a asp-route="blog" asp-route-blogAddress="@Model.BlogAddress" asp-route-tag="@tag.Name" class="text-secondary">@tag.Name</a>
                         @if (count != item.Tags.Count)
                         {
                             @:,

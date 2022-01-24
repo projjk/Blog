@@ -9,6 +9,7 @@
     <div class="container col-sm-8">
         <form asp-action="Write" method="post">
             <div class="row mb-4">
+                <input asp-for="Id" type="hidden"/>
                 <label asp-for="Title" class="col-sm-2 col-form-label"></label>
                 <div class="col">
                     <input asp-for="Title" class="form-control"/>

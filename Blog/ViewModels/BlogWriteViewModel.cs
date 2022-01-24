@@ -5,6 +5,8 @@ namespace Blog.ViewModels;
 
 public class BlogWriteViewModel
 {
+    public int Id { get; set; }
+
     [Required(ErrorMessage = "Please enter your article's address")]
     [Display(Name = "URL")]
     [StringLength(50, MinimumLength = 6)]
