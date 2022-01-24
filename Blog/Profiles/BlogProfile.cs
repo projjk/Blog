@@ -12,7 +12,7 @@ public class BlogProfile : Profile
             .ReverseMap();
         CreateMap<Article, BlogWriteViewModel>()
             .ReverseMap().ForMember(a => a.Tags, opt => opt.Ignore());
-        CreateMap<Models.Blog, BlogIndexIndex>()
+        CreateMap<Models.Blog, BlogIndexView>()
             .ForMember(a => a.Articles, opt => opt.Ignore())
             .ReverseMap();
         CreateMap<Article, BlogView>()

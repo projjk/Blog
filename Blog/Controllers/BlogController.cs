@@ -90,7 +90,7 @@ public class BlogController : Controller
             case CategoryTypeEnum.List:
                 break;
             case CategoryTypeEnum.View:
-                var model = _mapper.Map<BlogIndexIndex>(blog);
+                var model = _mapper.Map<BlogIndexView>(blog);
                 PaginatedList<Article>? articles = null;
                 var blogArticles = _db.Entry(blog).Collection(x => x.Articles)
                     .Query()

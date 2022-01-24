@@ -1,0 +1,21 @@
+@using BlogOffcanvas = Blog.ViewModels.BlogOffcanvas
+@model BlogOffcanvas
+
+<div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasCategories" aria-labelledby="offcanvasCategoriesLabel">
+    <div class="offcanvas-header">
+        <h5 class="offcanvas-title" id="offcanvasCategoriesLabel">@Model.BlogTitle</h5>
+        <button type="button" class="btn-close text-reset" data-bs-dismiss="offcanvas" aria-label="Close"></button>
+    </div>
+    <div class="offcanvas-body">
+        <div class="text-center mb-5">
+            @Model.OwnerName
+        </div>
+        <div class="list-group list-group-flush">
+            <a asp-route="blog" asp-route-blogAddress="@Model.BlogAddress" class="list-group-item list-group-item-action">All</a>
+            @foreach (var category in Model.Categories)
+            {
+                <a asp-route="blog" asp-route-blogAddress="@Model.BlogAddress" asp-route-category="@category.Name" class="list-group-item list-group-item-action">@category.Name</a>
+            }
+        </div>
+    </div>
+</div>
