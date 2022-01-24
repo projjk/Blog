@@ -330,12 +330,12 @@ public class BlogController : Controller
         _repository.Commit(); // have to save separately in order to avoid a circular dependency error about categories.
         await _userManager.AddToRoleAsync(user, Roles.Blogger.ToString());
         await _signInManager.RefreshSignInAsync(user); // to refresh the role claim
-        return RedirectToAction("CreateComplete");
+        return RedirectToAction("CreateComplete", new { blogAddress = blog.BlogAddress});
     }
 
-    public IActionResult CreateComplete()
+    public IActionResult CreateComplete(string blogAddress)
     {
-        ViewBag.SuccessMessage = "You created a new blog!";
+        ViewBag.blogAddress = blogAddress;
         return View();
     }
 

@@ -3,5 +3,8 @@
 }
 
 <div class="text-center">
-    <div class="alert alert-success" role="alert">@ViewBag.SuccessMessage</div>
+    <div class="alert alert-success" role="alert">
+        You are a blogger now!
+        <a class="dropdown-item" asp-route="blog" asp-route-blogAddress="@ViewBag.blogAddress">https://projectcode9.com/Blog/@ViewBag.blogAddress</a>
+    </div>
 </div>
