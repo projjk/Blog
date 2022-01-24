@@ -48,25 +48,17 @@ app.UseAuthorization();
 
 
 app.MapControllerRoute(
-    name: "blogCreate",
-    pattern: "Blog/Write",
-    defaults: new { controller = "Blog", action = "Write" });
-app.MapControllerRoute(
-    name: "blogCreate",
-    pattern: "Blog/Create",
-    defaults: new { controller = "Blog", action = "Create" });
-app.MapControllerRoute(
-    name: "blogCreateComplete",
-    pattern: "Blog/CreateComplete",
-    defaults: new { controller = "Blog", action = "CreateComplete" });
-app.MapControllerRoute(
-    name: "blog",
-    pattern: "Blog/{blogAddress?}/{action=Index}/{id?}",
-    defaults: new { controller = "Blog" });
+    name: "blogAction",
+    pattern: "Blog/{action}",
+    defaults: new { controller = "Blog"});
 app.MapControllerRoute(
     name: "blogView",
     pattern: "Blog/{blogAddress}/{articleUrl}",
     defaults: new { controller = "Blog", action = "View" });
+app.MapControllerRoute(
+    name: "blog",
+    pattern: "Blog/{blogAddress}",
+    defaults: new { controller = "Blog", action = "Index" });
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");

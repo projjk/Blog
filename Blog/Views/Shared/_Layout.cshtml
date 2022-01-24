@@ -28,10 +28,10 @@
                             Blog
                         </a>
                         <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
-                            <li><a class="dropdown-item" asp-area="" asp-controller="Blog" asp-action="Index">Jake's</a></li>
-                            <li><a class="dropdown-item" asp-area="" asp-controller="Blog" asp-action="Create">Create</a></li>
-                            <li><a class="dropdown-item" asp-area="" asp-controller="Blog" asp-action="Write">Write</a></li>
-                            <li><a class="dropdown-item" asp-area="" asp-controller="Blog" asp-action="Manage">Manage</a></li>
+                            <li><a class="dropdown-item" asp-route="blog" asp-route-blogAddress="jake">Jake's</a></li>
+                            <li><a class="dropdown-item" asp-controller="Blog" asp-action="Create">Create</a></li>
+                            <li><a class="dropdown-item" asp-controller="Blog" asp-action="Write">Write</a></li>
+                            <li><a class="dropdown-item" asp-controller="Blog" asp-action="Manage">Manage</a></li>
                         </ul>
                     </li>
                 </ul>

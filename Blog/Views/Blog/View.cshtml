@@ -7,7 +7,7 @@
 <div class="container">
     @if (Model != null)
     {
-        <h1><a asp-controller="Blog" asp-action="Index" asp-route-blogAddress="@Model.BlogAddress" class="text-decoration-none text-dark"><i class="fs-3 fas fa-arrow-left"></i> @Model.BlogTitle</a></h1>
+        <h1><a asp-route="blog" asp-route-blogAddress="@Model.BlogAddress" class="text-decoration-none text-dark"><i class="fs-3 fas fa-arrow-left"></i> @Model.BlogTitle</a></h1>
 
         <div id="article">
             <div class="row mt-5">
@@ -37,6 +37,7 @@
                     </div>
                 </div>
             }
+            <div id="comments"></div>
             @foreach (var comment in Model.Comments!)
             {
                 <div class="row comments mb-3">

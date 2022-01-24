@@ -230,7 +230,8 @@ public class BlogController : Controller
         user.Blog.Articles ??= new List<Article>();
         user.Blog.Articles.Add(article);
         _repository.CreateArticle(article);
-        return RedirectToAction("Index");
+        return RedirectToRoute("blogView",
+            new { blogAddress = user.Blog.BlogAddress, articleUrl = article.Url });
     }
 
     [Authorize(Roles = "Blogger")]
@@ -278,7 +279,7 @@ public class BlogController : Controller
 
         model.BlogAddress = model.BlogAddress.ToLower();
         var addressBlackList = new[]
-            { "create", "view", "cancel", "edit", "manage", "delete", "post", "jake", "admin", "view" };
+            { "create", "index", "view", "cancel", "edit", "manage", "delete", "post", "jake", "admin", "view" };
         var titleBlackList = new[] { "fuck", "suck" };
         if (addressBlackList.FirstOrDefault(elem => model.BlogAddress.Contains(elem)) != null
             || titleBlackList.FirstOrDefault(elem => model.BlogAddress.Contains(elem)) != null)
@@ -368,8 +369,8 @@ public class BlogController : Controller
         article.Comments!.Add(newComment);
         _repository.Commit();
 
-        
-        return RedirectToAction("View", new {blogAddress = blogWriteComment.BlogAddress, articleUrl = blogWriteComment.ArticleUrl});
+        return RedirectToRoute("blogView",
+            new { blogAddress = blogWriteComment.BlogAddress, articleUrl = blogWriteComment.ArticleUrl });
     }
 
     private string HashPassword(string password)
