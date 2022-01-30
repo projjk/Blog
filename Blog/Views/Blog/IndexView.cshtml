@@ -1,9 +1,8 @@
 ﻿@{
     ViewData["Title"] = "Home Page";
 }
-@using BlogIndexIndex = Blog.ViewModels.BlogIndexView
 @using Blog.ViewModels
-@model BlogIndexIndex
+@model BlogIndexView
 <div class="container">
     @if (Model != null)
     {
@@ -131,8 +130,9 @@
         // offcanvas
         @await Html.PartialAsync("_BlogOffcanvasPartial", new BlogOffcanvas
         {
-            OwnerName = Model.Owner.DisplayName, BlogTitle = Model.BlogTitle, BlogAddress = Model.BlogAddress,
-            Categories = Model. Categories, Category = Model.Category
+            OwnerDisplayName = Model.Owner.DisplayName, BlogTitle = Model.BlogTitle, BlogAddress = Model.BlogAddress,
+            Categories = Model. Categories, Category = Model.Category, VisitorCounter = Model.VisitorCounter,
+            IsOwner = Model.IsOwner
         })
     }
 </div>

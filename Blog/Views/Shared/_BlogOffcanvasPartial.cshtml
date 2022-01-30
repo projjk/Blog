@@ -1,5 +1,9 @@
 @using BlogOffcanvas = Blog.ViewModels.BlogOffcanvas
+@using Blog.Areas.Identity.Data
+@using Microsoft.AspNetCore.Identity
 @model BlogOffcanvas
+@inject SignInManager<BlogUser> SignInManager
+
 
 <div class="offcanvas offcanvas-start" tabindex="-1" id="offcanvasCategories" aria-labelledby="offcanvasCategoriesLabel">
     <div class="offcanvas-header">
@@ -8,7 +12,7 @@
     </div>
     <div class="offcanvas-body">
         <div class="text-center mb-5">
-            @Model.OwnerName
+            @Model.OwnerDisplayName
         </div>
         <div class="list-group list-group-flush">
             <a asp-route="blog" asp-route-blogAddress="@Model.BlogAddress" class="list-group-item list-group-item-action">All</a>
@@ -16,6 +20,15 @@
             {
                 <a asp-route="blogIndexCategory" asp-route-blogAddress="@Model.BlogAddress" asp-route-category="@category.Name" class="list-group-item list-group-item-action">@category.Name</a>
             }
+        </div>
+        @if (Model.IsOwner)
+        {
+            <div class="mt-5 d-flex">
+                <a class="btn btn-outline-secondary w-50" asp-controller="Blog" asp-action="Write">Write</a> <a class="btn btn-outline-secondary w-50" asp-controller="Blog" asp-action="Manage">Manage</a>
+            </div>
+        }
+        <div class="mt-5">
+            Visit: @Model.VisitorCounter
         </div>
     </div>
 </div>

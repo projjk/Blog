@@ -1,7 +1,6 @@
 @using Microsoft.AspNetCore.Identity
 @using Blog.Areas.Identity.Data
 @inject SignInManager<BlogUser> SignInManager
-@inject UserManager<BlogUser> UserManager
 
 <ul class="navbar-nav">
     @if (SignInManager.IsSignedIn(User))

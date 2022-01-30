@@ -87,6 +87,10 @@ public class BlogController : Controller
             currentCategory = blog.Categories.FirstOrDefault(c => String.Equals(c.Name, category, StringComparison.InvariantCultureIgnoreCase)) ?? blog.DefaultCategory;
         }
 
+        // Is the current logged in user the owner?
+        bool IsOwner = await _db.Users.Include(x => x.Blog)
+            .SingleOrDefaultAsync(x => x.Id == _userManager.GetUserId(User)) == blog.Owner;
+
         // viewtype
         switch (currentCategory.CategoryType)
         {
@@ -118,6 +122,7 @@ public class BlogController : Controller
 
                 model.Articles = articles;
                 model.Category = currentCategory;
+                model.IsOwner = IsOwner;
                 return View("IndexView", model);
 
             case CategoryTypeEnum.Gallery:
@@ -378,10 +383,15 @@ public class BlogController : Controller
             ViewBag.ErrorMessage = "There's no article with that address.";
             return View("Error");
         }
-
+        
         var blog = article.Author.Blog;
         var viewModel = _mapper.Map<BlogView>(article);
         _mapper.Map(blog, viewModel);
+
+        // Is the current logged in user the owner?
+        viewModel.IsOwner = await _db.Users.Include(x => x.Blog)
+            .SingleOrDefaultAsync(x => x.Id == _userManager.GetUserId(User)) == blog!.Owner;
+
         article.ViewCount++;
         blog!.VisitorCounter++;
         _repository.Commit();

@@ -8,6 +8,8 @@ public class BlogView
 {
     // Blog Properties
     public BlogUser Owner { get; set; } = null!;
+    public bool IsOwner { get; set; }
+
     public string BlogAddress { get; set; } = null!;
     public int VisitorCounter { get; set; }
     public string BlogTitle { get; set; } = null!;

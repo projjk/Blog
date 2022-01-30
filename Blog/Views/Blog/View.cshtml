@@ -20,7 +20,7 @@
             </div>
             <div class="row mt-2 mb-4">
                 <div class="col text-secondary">By <span class="text-dark">@Model.Owner.DisplayName</span> - @Model.PostDate</div>
-                @if (SignInManager.IsSignedIn(User) && User.FindFirst("http://schemas.xmlsoap.org/ws/2005/05/identity/claims/name")!.Value == Model.Owner.UserName)
+                @if (Model.IsOwner)
                 {
                     <div class="col text-end">
                         <a asp-controller="Blog" asp-action="Write" asp-route-articleId="@Model.Id" class="text-secondary"><i class="far fa-edit"></i></a>
