@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
 using AutoMapper;
@@ -143,7 +144,7 @@ public class BlogController : Controller
         if (articleId > 0)
         {
             var fetchedArticle = await _db.Articles.Include(a => a.Tags).FirstOrDefaultAsync(a => a.Id == articleId);
-            if (fetchedArticle != null && user == fetchedArticle.Author)
+            if (IsOwner(user, fetchedArticle))
             {
                 _mapper.Map(fetchedArticle, model);
 
@@ -241,21 +242,29 @@ public class BlogController : Controller
                 _mapper.Map(model, article);
                 article.LastUpdate = DateTime.UtcNow;
                 
-                // Remove old tags
-                if (article.Tags != null)
-                {
-                    foreach (var tag in article.Tags)
+                // Update only changes in tags
+                if (article.Tags != null) {
+                    if (string.IsNullOrWhiteSpace(model.Tags))
                     {
-                        tag.Count--;
-                        article.Tags.Remove(tag);
-                        if (user.Blog.Articles!.FirstOrDefault(a => a.Tags != null && a.Tags.Contains(tag)) == null)
+                        RemoveTags(article);
+                    }
+                    else {
+                        var modelTags = model.Tags.Split(',').ToList();
+                        foreach (var tag in article.Tags)
                         {
-                            user.Blog.Tags!.Remove(tag);
-                            if (tag.Count <= 0)
+                            // exists in original article, but doesn't in the updated
+                            if (!modelTags.Contains(tag.Name))
                             {
-                                _db.Tags.Remove(tag);
+                                RemoveTag(article, tag);
+                            }
+                            // exists in both objects
+                            else
+                            {
+                                modelTags.Remove(tag.Name);
                             }
                         }
+                        // now only tags to be added are left.
+                        model.Tags = string.Join(',', modelTags);
                     }
                 }
             }
@@ -298,11 +307,11 @@ public class BlogController : Controller
                     newTag = new Tag { Name = tagName, Count = 1 };
                 }
 
-                if (article.Tags.FirstOrDefault(t => t.Id == newTag.Id) == null)
+                if (article.Tags.FirstOrDefault(t => t.Name == newTag.Name) == null)
                 {
                     article.Tags.Add(newTag);
                 }
-                if (user.Blog.Tags.FirstOrDefault(t => t.Id == newTag.Id) == null)
+                if (user.Blog.Tags.FirstOrDefault(t => t.Name == newTag.Name) == null)
                 {
                     user.Blog.Tags.Add(newTag);
                 }
@@ -324,10 +333,34 @@ public class BlogController : Controller
             new { blogAddress = user.Blog.BlogAddress, articleUrl = article.Url });
     }
 
-    [Authorize(Roles = "Blogger")]
-    public IActionResult Edit(int id)
+    private void RemoveTags(Article article)
     {
-        return View();
+        if (article.Tags == null)
+        {
+            return;
+        }
+        
+        foreach (var tag in article.Tags)
+        {
+            RemoveTag(article, tag);
+        }
+    }
+
+    private void RemoveTag(Article article, Tag tag)
+    {
+        var blog = article.Author.Blog!;
+        tag.Count--;
+        article.Tags!.Remove(tag);
+        if (blog.Articles!.FirstOrDefault(a => a.Tags != null && a.Tags.Contains(tag)) == null)
+        {
+            blog.Tags!.Remove(tag);
+            tag.Blogs.Remove(blog);
+            if (tag.Count <= 0)
+            {
+                _db.Tags.Remove(tag);
+                _repository.Commit();
+            }
+        }
     }
 
     public async Task<IActionResult> View(string blogAddress, string articleUrl)
@@ -517,4 +550,66 @@ public class BlogController : Controller
         byte[] actualSubkey = KeyDerivation.Pbkdf2(password, salt, Pbkdf2Prf, Pbkdf2IterCount, Pbkdf2SubkeyLength);
         return CryptographicOperations.FixedTimeEquals(actualSubkey, expectedSubkey);
     }
+
+    
+    [HttpPost]
+    [Authorize(Roles = "Blogger")]
+    public async Task<IActionResult> Delete(BlogDeleteArticle model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View("Error");
+        }
+
+        var user = (await _db.Users.FirstOrDefaultAsync(x => x.Id == _userManager.GetUserId(User)))!;
+        var article = await _db.Articles
+            .Include(a => a.Tags)
+            .Include(a => a.Comments)
+            .Include(a => a.Category)
+            .Include(a => a.Author.Blog)
+            .ThenInclude(b => b!.Articles)!
+            .Include(a => a.Author.Blog)
+            .ThenInclude(b => b!.Tags)
+            .FirstOrDefaultAsync(a => a.Id == model.ArticleId);
+
+        if (IsOwner(user, article))
+        {
+            // tag removal
+            RemoveTags(article);
+
+            // comment removal
+            if (article.Comments != null)
+            {
+                foreach (var comment in article.Comments)
+                {
+                    _db.Comments.Remove(comment);
+                }
+                article.Comments = null;
+            }
+
+            // article removal
+            _db.Articles.Remove(article);
+            article.Category.Count--;
+
+            _repository.Commit();
+        }
+        else
+        {
+            return View("Error");
+        }
+
+        return RedirectToRoute("blog",
+            new { blogAddress = model.BlogAddress });
+    }
+
+    private static bool IsOwner(BlogUser user, [NotNullWhen(true)] Article? article)
+    {
+        if (article == null)
+        {
+            return false;
+        }
+        
+        return article.Author == user;
+    }
+
 }

@@ -38,7 +38,8 @@
                                     </div>
                                     <div class="modal-footer">
                                         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
-                                        <button type="button" class="btn btn-danger">Delete</button>
+                                        @await Html.PartialAsync("_DeleteArticle", new BlogDeleteArticle { BlogAddress = Model.BlogAddress, ArticleId = Model.Id })
+
                                     </div>
                                 </div>
                             </div>
