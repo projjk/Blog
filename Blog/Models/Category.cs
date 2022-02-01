@@ -11,7 +11,7 @@ public class Category
     public string Name { get; set; } = null!;
     public int Count { get; set; }
     public BlogUser Owner { get; set; } = null!;
-    public bool IsHidden { get; set; }
+    public bool Display { get; set; }
     public CategoryTypeEnum CategoryType { get; set; }
     public int ItemsPerPage { get; set; }
 }

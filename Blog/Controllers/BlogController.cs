@@ -12,7 +12,6 @@ using Microsoft.EntityFrameworkCore;
 using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Cryptography.KeyDerivation;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 
 
 namespace Blog.Controllers;
@@ -66,9 +65,10 @@ public class BlogController : Controller
         }
         else
         {
-            blog = await _db.Blogs.Include(b => b.Owner)
-                .Include(b => b.DefaultCategory)
+            blog = await _db.Blogs
                 .Where(b => EF.Functions.Collate(b.BlogAddress, "case_insensitive") == blogAddress)
+                .Include(b => b.Owner)
+                .Include(b => b.DefaultCategory)
                 .FirstOrDefaultAsync();
             if (blog == null)
             {
@@ -123,6 +123,10 @@ public class BlogController : Controller
                 model.Articles = articles;
                 model.Category = currentCategory;
                 model.IsOwner = IsOwner;
+                var tempBlog = await _db.Blogs.Include(b => b.Categories.OrderBy(c => c.Id))
+                    .AsNoTracking()
+                    .FirstOrDefaultAsync(b => b.Id == blog.Id); // to use OrderBy here I had to use .AsNoTracking() so had to make this new variable.
+                model.Categories = tempBlog!.Categories;
                 return View("IndexView", model);
 
             case CategoryTypeEnum.Gallery:
@@ -455,7 +459,7 @@ public class BlogController : Controller
         user.Blog = blog;
         blog.Owner = user;
         var defaultCategory = new Category
-            { Name = "General", Count = 0, Owner = user, ItemsPerPage = 3, CategoryType = CategoryTypeEnum.View };
+            { Name = "General", Display = true, Count = 0, Owner = user, ItemsPerPage = 3, CategoryType = CategoryTypeEnum.View };
         blog.DefaultCategory = defaultCategory;
         _repository.CreateBlog(blog);
         blog.Categories = new List<Category>
@@ -473,10 +477,90 @@ public class BlogController : Controller
     }
 
     [Authorize(Roles = "Blogger")]
-    public IActionResult Manage()
+    public async Task<IActionResult> Manage()
     {
-        return View();
+        var user = await _db.Users
+            .Include(x => x.Blog)
+            .ThenInclude(b => b.Categories.OrderBy(c => c.Id))
+            .FirstOrDefaultAsync(x => x.Id == _userManager.GetUserId(User));
+        var blog = user!.Blog;
+        var model = _mapper.Map<BlogManage>(blog);
+        // using viewmodel for categories
+        IList<BlogManageCategory> categories = new List<BlogManageCategory>();
+        foreach (var blogCategory in blog.Categories)
+        {
+            categories.Add(_mapper.Map<BlogManageCategory>(blogCategory));
+        }
+
+        model.Categories = categories;
+        model.DefaultCategory = blog!.DefaultCategory.Id.ToString();
+        model.AddCategory = new BlogManageCategory { Display = true, CategoryType = CategoryTypeEnum.View, ItemsPerPage = 3 };
+        return View(model);
     }
+    
+    
+    [Authorize(Roles = "Blogger")]
+    [HttpPost]
+    public async Task<IActionResult> Manage(BlogManage model)
+    {
+        // if not adding a new category, exclude it from validation.
+        if (string.IsNullOrWhiteSpace(model.AddCategory.Name))
+        {
+            ModelState.Remove("AddCategory.Name");
+        }
+        
+        if (!ModelState.IsValid)
+        {
+            ViewBag.ErrorMessage = "Don't even try :)";
+            return View("Error");
+        }
+
+        var user = await _db.Users
+            .Include(x => x.Blog)
+            .ThenInclude(b => b.Categories)
+            .FirstOrDefaultAsync(x => x.Id == _userManager.GetUserId(User));
+        var blog = user!.Blog;
+        _mapper.Map(model, blog);
+        // validate category ownership
+        foreach (var category in model.Categories)
+        {
+            var fetchedCategory = blog!.Categories.FirstOrDefault(c => c.Id == category.Id);
+            if (fetchedCategory == null)
+            {
+                ViewBag.ErrorMessage = "Don't even try :)";
+                return View("Error");
+            }
+
+            _mapper.Map(category, fetchedCategory);
+        }
+        // validate default category
+        if (!int.TryParse(model.DefaultCategory, out int categoryId))
+        {
+            ViewBag.ErrorMessage = "Don't even try :)";
+            return View("Error");
+        }
+        var defaultCategory = blog!.Categories.FirstOrDefault(c => c.Id == categoryId);
+        if (defaultCategory == null)
+        {
+            ViewBag.ErrorMessage = "Don't even try :)";
+            return View("Error");
+        }
+        
+        //add a new category
+        if (!string.IsNullOrWhiteSpace(model.AddCategory.Name))
+        {
+            var newCategory = _mapper.Map<Category>(model.AddCategory);
+            newCategory.Owner = user;
+            _db.Categories.Add(newCategory);
+            blog.Categories.Add(newCategory);
+        }
+
+        blog.DefaultCategory = defaultCategory;
+        _repository.Commit();
+        return RedirectToAction("Manage");
+    }
+    
+    
 
     [HttpPost]
     public async Task<IActionResult> WriteComment(BlogWriteComment blogWriteComment)
@@ -612,6 +696,47 @@ public class BlogController : Controller
             new { blogAddress = model.BlogAddress });
     }
 
+    [HttpPost]
+    [Authorize(Roles = "Blogger")]
+    public async Task<IActionResult> DeleteCategory(BlogDeleteCategory model)
+    {
+        if (!ModelState.IsValid)
+        {
+            return View("Error");
+        }
+
+        var user = (await _db.Users
+            .Include(u => u.Blog)
+            .ThenInclude(b => b.Categories)
+            .FirstOrDefaultAsync(x => x.Id == _userManager.GetUserId(User)))!;
+        var blog = user.Blog!;
+
+        // server-side validation
+        var fetchedCategory = blog.Categories.FirstOrDefault(c => c.Id == model.CategoryId);
+        if (fetchedCategory == null || blog.DefaultCategory == fetchedCategory)
+        {
+            return RedirectToAction("Manage");
+        }
+
+        // Articles in that category will be moved to the default category.
+        if (fetchedCategory.Count > 0)
+        {
+            var articlesInTheCategory = _db.Articles.Where(a => a.Category == fetchedCategory);
+            foreach (var article in articlesInTheCategory)
+            {
+                article.Category = blog.DefaultCategory;
+            }
+
+            _repository.Commit();
+        }
+
+        blog.Categories.Remove(fetchedCategory);
+        _db.Categories.Remove(fetchedCategory);
+        _repository.Commit();
+
+        return RedirectToAction("Manage");
+    }
+
     private static bool IsOwner(BlogUser user, [NotNullWhen(true)] Article? article)
     {
         if (article == null)
@@ -620,6 +745,15 @@ public class BlogController : Controller
         }
         
         return article.Author == user;
+    }
+ private static bool IsOwner(BlogUser user, [NotNullWhen(true)] Models.Blog? blog)
+    {
+        if (blog == null)
+        {
+            return false;
+        }
+        
+        return blog.Owner == user;
     }
 
 }

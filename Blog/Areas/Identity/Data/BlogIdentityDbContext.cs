@@ -112,7 +112,7 @@ public class BlogIdentityDbContext : IdentityDbContext<BlogUser>
             Count = 0,
             OwnerId = adminUserId,
             BlogId = 1,
-            IsHidden = false,
+            Display = true,
             ItemsPerPage = 3,
             CategoryType = CategoryTypeEnum.View
         });

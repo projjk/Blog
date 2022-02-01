@@ -21,5 +21,13 @@ public class BlogProfile : Profile
             .ForMember(a => a.Tags, opt => opt.Ignore())
             .ForMember(a => a.Id, opt => opt.Ignore())
             .ReverseMap();
+        CreateMap<Models.Blog, BlogManage>()
+            .ForMember(a => a.DefaultCategory, opt => opt.Ignore())
+            .ForMember(a => a.Categories, opt => opt.Ignore())
+            .ReverseMap()
+            .ForMember(a => a.Categories, opt => opt.Ignore())
+            .ForMember(a => a.DefaultCategory, opt => opt.Ignore());
+        CreateMap<Category, BlogManageCategory>()
+            .ReverseMap();
     }
 }

@@ -1,7 +1,165 @@
 ﻿@{
     ViewData["Title"] = "Blog Manager";
 }
-
+@using BlogManage = Blog.ViewModels.BlogManage
+@using System.ComponentModel
+@using Blog.ViewModels
+@model BlogManage
 <div class="text-center">
     <h1 class="display-4">Manage your blog</h1>
+    <div class="container col-sm-8">
+        <form asp-action="Manage" method="post">
+            <div class="row mb-4">
+                <label asp-for="BlogTitle" class="col-sm-2 col-form-label"></label>
+                <div class="col">
+                    <input asp-for="BlogTitle" class="form-control"/>
+                    <span asp-validation-for="BlogTitle" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <label asp-for="BlogAddress" class="col-sm-2 col-form-label"></label>
+
+                <div class="input-group col">                         
+                    <span class="input-group-text pe-1" id="basic-addon">https://projectcode9.com/Blog/</span>
+
+                    <input asp-for="BlogAddress" class="form-control ps-1" style="min-width: 100px;" aria-describedby="basic-addon"/>
+                    <span asp-validation-for="BlogAddress" class="text-danger"></span>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col">
+                    <table class="table">
+                        <thead>
+                        <tr>
+                            <th scope="col">Default</th>
+                            <th scope="col">Category Name</th>
+                            <th scope="col">Type</th>
+                            <th scope="col">Items</th>
+                            <th scope="col">Display</th>
+                            <th scope="col">Delete</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        @for(int i = 0; i < Model!.Categories.Count; i++)
+                        {
+                            <tr>
+                                <th scope="row">
+                                    <input class="form-check-input" type="radio" name="DefaultCategory" id="DefaultCategory_@Model.Categories[i].Id" value="@Model.Categories[i].Id"
+                                    @{
+                                        if (Model.Categories[i].Id.ToString() == Model.DefaultCategory)
+                                        {
+                                            @:checked
+                                        }
+                                    }
+                                    />
+                                </th>
+                                <td>
+                                    @Html.HiddenFor(m => m.Categories[i].Id)
+                                    <input class="form-control" asp-for="Categories[i].Name"/>
+                                </td>
+                                <td>                    <select asp-for="Categories[i].CategoryType" asp-items="Html.GetEnumSelectList<CategoryTypeEnum>()"
+                                                                class="form-select" aria-label="Default select example">
+                                                        </select>
+                                                        <span asp-validation-for="Categories[i].CategoryType" class="text-danger"></span>
+</td>
+                                <td><input class="form-control" asp-for="Categories[i].ItemsPerPage" CausesValidation="false"/></td>
+                            <td>
+                                <div class="form-check form-switch">
+                                    @Html.CheckBoxFor(m => m.Categories[i].Display, new { @class = "form-check-input", role = "switch" })
+                                </div>
+                            </td>
+                                <td>
+                                        @{
+                                            if (Model.Categories[i].Id.ToString() == Model.DefaultCategory)
+                                            {
+                                                <i class="far fa-trash-alt text-secondary text-opacity-25" data-bs-toggle="tooltip" data-bs-placement="top" title="You can't delete the default category."></i>
+                                            }
+                                            else
+                                            {
+                                                <a data-bs-toggle="modal" data-bs-target="#deleteCategoryModal" style="cursor: pointer;" onclick="document.getElementById('deleteCategoryId').value='@Model.Categories[i].Id'">
+                                                    <i class="far fa-trash-alt"></i>
+                                                </a>
+
+                                            }
+                                        }
+                                </td>
+                            </tr>
+                        }
+                        <tr>
+                            <th scope="row" class="align-middle">
+                            </th>
+                            <td>
+                                @Html.HiddenFor(m => m.AddCategory.Id)
+                                <input class="form-control" asp-for="AddCategory.Name" data-val="false" placeholder="add a new category"/>
+                            </td>
+                            <td>
+                                <select asp-for="AddCategory.CategoryType" asp-items="Html.GetEnumSelectList<CategoryTypeEnum>()"
+                                        class="form-select" aria-label="Default select example">
+                                </select>
+                                <span asp-validation-for="AddCategory.CategoryType" class="text-danger"></span>
+                            </td>
+                            <td>
+                                <input class="form-control" asp-for="AddCategory.ItemsPerPage"/>
+                            </td>
+                            <td>
+                                <div class="form-check form-switch">
+                                    @Html.CheckBoxFor(m => m.AddCategory.Display, new { @class = "form-check-input", role = "switch"})
+                                </div>
+                            </td>
+                            <td>
+
+                            </td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+            <div class="row mb-3">
+                <div class="col">
+                                <div asp-validation-summary="All" class="text-danger"></div>
+
+                    <input type="submit" class="btn btn-primary" value="Save"/>
+                </div>
+            </div>
+        </form>
+    </div>
 </div>
+<!-- Modal -->
+<div class="modal fade" id="deleteCategoryModal" tabindex="-1" aria-labelledby="deleteCategoryModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="deleteCategoryModalLabel">Delete</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                Do you really want to delete this category?<br/>
+                Articles will be moved to the default category.
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+                @{
+                    Html.BeginForm("DeleteCategory", "Blog", FormMethod.Post, new { id = "deleteCategoryForm" });
+                }
+                <input type="hidden" name="CategoryId" id="deleteCategoryId" value=""/>
+                <button type="submit" class="btn btn-danger">Delete</button>
+                @{
+                    Html.EndForm();
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+
+@section Scripts
+{
+    <partial name="_ValidationScriptsPartial"/>
+    <script type="text/javascript">
+        var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+        var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+          return new bootstrap.Tooltip(tooltipTriggerEl)
+        })
+    </script>
+
+}
