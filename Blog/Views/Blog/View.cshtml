@@ -1,17 +1,24 @@
-﻿@{
-    ViewData["Title"] = "";
-}
-@using BlogView = Blog.ViewModels.BlogView
+﻿@using BlogView = Blog.ViewModels.BlogView
 @using Blog.ViewModels
 @using Microsoft.AspNetCore.Identity
 @using Blog.Areas.Identity.Data
 @inject SignInManager<BlogUser> SignInManager
 @inject UserManager<BlogUser> UserManager
 @model BlogView
+@{
+    ViewData["Title"] = Model!.Title + " - " + Model.BlogTitle;
+}
 
 <div class="container">
     @if (Model != null)
     {
+        if (TempData["CustomSuccess"] != null)
+        {
+            <div class="text-success">
+                @TempData["CustomSuccess"]
+            </div>            
+        }
+
         <h1><a asp-route="blog" asp-route-blogAddress="@Model.BlogAddress" class="text-decoration-none text-dark"><i class="fs-3 fas fa-arrow-left"></i> @Model.BlogTitle</a></h1>
 
         <div id="article">
@@ -24,13 +31,13 @@
                 {
                     <div class="col text-end">
                         <a asp-controller="Blog" asp-action="Write" asp-route-articleId="@Model.Id" class="text-secondary"><i class="far fa-edit"></i></a>
-                        <a data-bs-toggle="modal" data-bs-target="#exampleModal" style="cursor: pointer;"><i class="far fa-trash-alt"></i></a>
+                        <a data-bs-toggle="modal" data-bs-target="#deleteArticleModal" style="cursor: pointer;"><i class="far fa-trash-alt"></i></a>
                         <!-- Modal -->
-                        <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                        <div class="modal fade" id="deleteArticleModal" tabindex="-1" aria-labelledby="deleteArticleModalLabel" aria-hidden="true">
                             <div class="modal-dialog">
                                 <div class="modal-content">
                                     <div class="modal-header">
-                                        <h5 class="modal-title" id="exampleModalLabel">Delete</h5>
+                                        <h5 class="modal-title" id="deleteArticleModalLabel">Delete</h5>
                                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                                     </div>
                                     <div class="modal-body">
@@ -72,9 +79,18 @@
             {
                 <div class="row comments mb-3">
                     <div class="comment-header">
-                        <span class="fw-bold">@comment.Author</span><span class="ms-2 datetime text-secondary">@comment.PostDate</span>
+                        <span class="fw-bold" id="commentAuthor_@comment.Id">@comment.Author</span><span class="ms-2 datetime text-secondary">@comment.PostDate
+                            @{
+                                if (comment.LastUpdate.Year > 1)
+                                {
+                                    <i class="far fa-clock" data-bs-toggle="tooltip" data-bs-placement="top" title="Updated: @comment.LastUpdate"></i>
+                                }
+                            }</span>
+                        <div class="float-end">
+                             <a href="#WriteCommentForm" onclick="modifyComment(@comment.Id)" class="text-secondary"><i class="far fa-edit"></i></a>
+                        </div>
                     </div>
-                    <p class="comment-content mt-1">@comment.Body</p>
+                    <p class="comment-content mt-1" id="commentBody_@comment.Id">@comment.Body</p>
                 </div>
             }
             @await Html.PartialAsync("_WriteCommentPartial", new BlogWriteComment { BlogAddress = Model.BlogAddress, ArticleId = Model.Id, ArticleUrl = Model.Url })
@@ -85,4 +101,42 @@
 @section Scripts
 {
     <partial name="_ValidationScriptsPartial"/>
+    <script type="text/javascript">
+    var tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'))
+    var tooltipList = tooltipTriggerList.map(function (tooltipTriggerEl) {
+      return new bootstrap.Tooltip(tooltipTriggerEl)
+    })
+    function modifyComment(commentId) {
+        document.getElementById("CommentId").value = commentId
+        document.getElementById("CommentAuthor").value = document.getElementById("commentAuthor_" + commentId).innerHTML
+        document.getElementById("CommentAuthor").disabled = true
+        document.getElementById("CommentBody").value = document.getElementById("commentBody_" + commentId).innerHTML
+        document.getElementById("WriteCommentSubmitDiv").innerHTML = `
+<div class="row">
+    <div class="col">
+        <button type="button" onclick="modifyCommentCancel()" class="btn btn-outline-secondary w-100">Cancel</button>
+    </div>
+    <div class="col px-0">
+        <button type="button" onclick="deleteComment(` + commentId + `)" class="btn btn-danger w-100">Delete</button>
+    </div>
+    <div class="col">
+        <button type="submit" class="btn btn-secondary w-100">Update</button>
+    </div>
+</div>`
+    }
+    
+    function modifyCommentCancel() {
+        document.getElementById("WriteCommentForm").reset()
+        document.getElementById("CommentId").value = 0
+        document.getElementById("CommentDelete").value = false
+        document.getElementById("CommentAuthor").disabled = false
+        document.getElementById("WriteCommentSubmitDiv").innerHTML = '<button type="submit" class="btn btn-secondary w-100">Post</button>'
+    }
+    
+    function deleteComment(commentId) {
+        document.getElementById("CommentDelete").value = true
+        document.getElementById("WriteCommentForm").submit()
+    }
+        
+    </script>
 }

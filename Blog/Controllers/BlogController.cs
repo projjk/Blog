@@ -196,7 +196,7 @@ public class BlogController : Controller
         user = await _db.Users
             .Include(x => x.Blog)
             .ThenInclude(i => i!.Articles)
-            .Include(u => u.Blog.Articles)
+            .Include(u => u.Blog!.Articles)!
             .ThenInclude(a => a.Tags)
             .Include(x => x.Blog)
             .ThenInclude(i => i!.Tags)
@@ -374,6 +374,12 @@ public class BlogController : Controller
 
     public async Task<IActionResult> View(string blogAddress, string articleUrl)
     {
+        if (TempData["CustomError"] != null)
+        {
+            ModelState.AddModelError("CommentPassword", TempData["CustomError"]!.ToString()!);
+
+        }
+
         var article = await _db.Articles
             .Include(a => a.Author.Blog)
             .Include(a => a.Category)
@@ -567,23 +573,59 @@ public class BlogController : Controller
     {
         if (!ModelState.IsValid)
         {
-            return View("Error");
+            return RedirectToRoute("blogView",
+                new { blogAddress = blogWriteComment.BlogAddress, articleUrl = blogWriteComment.ArticleUrl });
         }
 
-        var newComment = new Comment
+        // Modifying a comment
+        if (blogWriteComment.CommentId > 0)
         {
-            Author = blogWriteComment.CommentAuthor,
-            Password = HashPassword(blogWriteComment.CommentPassword),
-            Body = blogWriteComment.CommentBody,
-            PostDate = DateTime.UtcNow
-        };
-        var article = await _db.Articles.Include(a => a.Comments)
-            .FirstOrDefaultAsync(a => a.Id == blogWriteComment.ArticleId);
-        if (article == null)
-        {
-            return View("Error");
+            var fetched = await _db.Comments.FirstOrDefaultAsync(c => c.Id == blogWriteComment.CommentId);
+            if (fetched != null && VerifyHashedPassword(fetched.Password, blogWriteComment.CommentPassword))
+            {
+                // Deleting a comment
+                if (blogWriteComment.CommentDelete)
+                {
+                    _db.Comments.Remove(fetched);
+                    TempData["CustomSuccess"] = "Successfully deleted the comment.";
+                }
+                // No, just editing
+                else
+                {
+                    fetched.Body = blogWriteComment.CommentBody;
+                    fetched.LastUpdate = DateTime.UtcNow;
+                    TempData["CustomSuccess"] = "Successfully edited the comment.";
+                }
+            }
+            else
+            {
+                TempData["CustomError"] = "The password does not match.";
+
+                return RedirectToRoute("blogView",
+                    new { blogAddress = blogWriteComment.BlogAddress, articleUrl = blogWriteComment.ArticleUrl });
+            }
         }
-        article.Comments!.Add(newComment);
+        // Adding a comment
+        else
+        {
+            var newComment = new Comment
+            {
+                Author = blogWriteComment.CommentAuthor,
+                Password = HashPassword(blogWriteComment.CommentPassword),
+                Body = blogWriteComment.CommentBody,
+                PostDate = DateTime.UtcNow
+            };
+            var article = await _db.Articles.Include(a => a.Comments)
+                .FirstOrDefaultAsync(a => a.Id == blogWriteComment.ArticleId);
+            if (article == null)
+            {
+                return View("Error");
+            }
+
+            article.Comments!.Add(newComment);
+            TempData["CustomSuccess"] = "Successfully added a comment.";
+        }
+
         _repository.Commit();
 
         return RedirectToRoute("blogView",

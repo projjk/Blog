@@ -1,11 +1,13 @@
 @using BlogWriteComment = Blog.ViewModels.BlogWriteComment
 @model BlogWriteComment
 
-<form asp-action="WriteComment" method="post">
+<form asp-action="WriteComment" method="post" id="WriteCommentForm">
     <div class="row g-2">
         <input asp-for="ArticleId" type="hidden"/>
         <input asp-for="ArticleUrl" type="hidden"/>
         <input asp-for="BlogAddress" type="hidden"/>
+        <input asp-for="CommentId" type="hidden"/>
+        <input asp-for="CommentDelete" type="hidden"/>
         <div class="col">
             <input asp-for="CommentAuthor" placeholder="Name" class="form-control"/>
             <span asp-validation-for="CommentAuthor" class="text-danger"></span>
@@ -17,7 +19,9 @@
         <div class="col-12 mt-1">
             <textarea asp-for="CommentBody" placeholder="Comment" class="form-control" rows="3"></textarea>
             <span asp-validation-for="CommentBody" class="text-danger"></span>
-            <button type="submit" class="btn btn-secondary mt-1 w-100">Post</button>
+        </div>
+        <div class="col mt-0" id="WriteCommentSubmitDiv">
+            <button type="submit" class="btn btn-secondary w-100">Post</button>
         </div>
     </div>
 </form>

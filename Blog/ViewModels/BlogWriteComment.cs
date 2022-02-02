@@ -6,6 +6,7 @@ public class BlogWriteComment
 {
     [Required]
     public int ArticleId { get; set; }
+    public int CommentId { get; set; }
     [Required]
     public string ArticleUrl { get; set; } = null!;
     [Required]
@@ -21,4 +22,6 @@ public class BlogWriteComment
     [Required(ErrorMessage = "Please enter the comment body.")]
     [StringLength(1500)]
     public string CommentBody { get; set; } = null!;
+    public bool CommentDelete { get; set; }
+
 }
