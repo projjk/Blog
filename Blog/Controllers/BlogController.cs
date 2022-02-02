@@ -68,6 +68,7 @@ public class BlogController : Controller
             blog = await _db.Blogs
                 .Where(b => EF.Functions.Collate(b.BlogAddress, "case_insensitive") == blogAddress)
                 .Include(b => b.Owner)
+                .Include(b => b.Categories)
                 .Include(b => b.DefaultCategory)
                 .FirstOrDefaultAsync();
             if (blog == null)
@@ -82,6 +83,11 @@ public class BlogController : Controller
         {
             currentCategory = blog.DefaultCategory;
         }
+        else if (category.Equals("all", StringComparison.InvariantCultureIgnoreCase))
+        {
+            currentCategory = new Category
+                { CategoryType = CategoryTypeEnum.List, ItemsPerPage = 10, Name = "All", Owner = blog.Owner };
+        }
         else
         {
             currentCategory = blog.Categories.FirstOrDefault(c => String.Equals(c.Name, category, StringComparison.InvariantCultureIgnoreCase)) ?? blog.DefaultCategory;
@@ -91,27 +97,57 @@ public class BlogController : Controller
         bool IsOwner = await _db.Users.Include(x => x.Blog)
             .SingleOrDefaultAsync(x => x.Id == _userManager.GetUserId(User)) == blog.Owner;
 
+        // Pagination
+        IQueryable<Article>? blogArticles;
+        if (currentCategory.Name.Equals("All"))
+        {
+            blogArticles = _db.Entry(blog).Collection(x => x.Articles)
+                .Query()
+                .Include(a => a.Author)
+                .Include(a => a.Category)
+                .Include(a => a.Comments)
+                .Include(a => a.Tags)
+                .OrderByDescending(a => a.PostDate)
+                .AsNoTracking();     
+        }
+        else
+        {
+            blogArticles = _db.Entry(blog).Collection(x => x.Articles)
+                .Query()
+                .Where(a => EF.Functions.Collate(a.Category.Name, "case_insensitive") == currentCategory.Name)
+                .Include(a => a.Author)
+                .Include(a => a.Category)
+                .Include(a => a.Comments)
+                .Include(a => a.Tags)
+                .OrderByDescending(a => a.PostDate)
+                .AsNoTracking();          
+        }
+        
+
+        var articles = await PaginatedList<Article>
+            .CreateAsync(blogArticles, page ?? 1, currentCategory.ItemsPerPage);
+
         // viewtype
+        var model = _mapper.Map<BlogIndexView>(blog);
+        var tempBlog = await _db.Blogs.Include(b => b.Categories.OrderBy(c => c.Id))
+            .AsNoTracking()
+            .FirstOrDefaultAsync(b => b.Id == blog.Id); // to use OrderBy here I had to use .AsNoTracking() so had to make this new variable.
+        model.Category = currentCategory;
+        model.IsOwner = IsOwner;
+        model.Categories = tempBlog!.Categories;
+
         switch (currentCategory.CategoryType)
         {
             case CategoryTypeEnum.List:
-                break;
-            case CategoryTypeEnum.View:
-                var model = _mapper.Map<BlogIndexView>(blog);
-                PaginatedList<Article>? articles = null;
-                var blogArticles = _db.Entry(blog).Collection(x => x.Articles)
-                    .Query()
-                    .Where(a => EF.Functions.Collate(a.Category.Name, "case_insensitive") == currentCategory.Name)
-                    .Include(a => a.Author)
-                    .Include(a => a.Category)
-                    .Include(a => a.Comments)
-                    .Include(a => a.Tags)
-                    .OrderByDescending(a => a.PostDate)
-                    .AsNoTracking();
-                articles =
-                    await PaginatedList<Article>.CreateAsync(blogArticles, page ?? 1,
-                        currentCategory.ItemsPerPage);
+                foreach (var article in articles)
+                {
+                    article.Body = string.Empty;
+                }
 
+                model.Articles = articles;
+                return View("IndexList", model);
+
+            case CategoryTypeEnum.View:
                 foreach (var article in articles)
                 {
                     if (article.Body.Length > 1000)
@@ -121,12 +157,6 @@ public class BlogController : Controller
                 }
 
                 model.Articles = articles;
-                model.Category = currentCategory;
-                model.IsOwner = IsOwner;
-                var tempBlog = await _db.Blogs.Include(b => b.Categories.OrderBy(c => c.Id))
-                    .AsNoTracking()
-                    .FirstOrDefaultAsync(b => b.Id == blog.Id); // to use OrderBy here I had to use .AsNoTracking() so had to make this new variable.
-                model.Categories = tempBlog!.Categories;
                 return View("IndexView", model);
 
             case CategoryTypeEnum.Gallery:

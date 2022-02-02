@@ -1,0 +1,99 @@
+﻿@{
+    ViewData["Title"] = "Home Page";
+}
+@using Blog.ViewModels
+@model BlogIndexView
+<div class="container">
+    @if (Model != null)
+    {
+        <div class="row position-relative">
+            <button class="btn btn-outline-secondary position-absolute top-50 start-0 translate-middle-y" style="width: 45px;" type="button" data-bs-toggle="offcanvas" data-bs-target="#offcanvasCategories" aria-controls="offcanvasCategories">
+                <i class="fas fa-bars"></i>
+            </button>
+            <h1 class="text-center">@Model.BlogTitle</h1>
+        </div>
+
+        @if (Model.Articles!.Count == 0)
+        {
+            <div class="row">No Article</div>
+        }
+        @if (Model.Articles.Count != 0)
+        {
+            @foreach (var item in Model.Articles)
+            {
+                <a asp-route="blogView" asp-route-blogAddress="@Model.BlogAddress" asp-route-articleUrl="@item.Url" class="text-decoration-none text-body">
+                    <div class="row mt-5 bg-light">
+                        <div class="col-9 text-break">
+                            <span class="fw-bolder fs-3">@item.Title</span>
+                            @if (item.Comments!.Count != 0)
+                            {
+                                <span class="text-secondary"><i class="far fa-comments"></i> @item.Comments!.Count</span>
+                            }
+                        </div>
+                        <div class="col-xl-3 text-end pt-2">By <span class="text-dark">@item.Author.DisplayName</span> - @item.PostDate</div>
+                    </div>
+                </a>
+            }
+        }
+
+        // Pagination
+        <div class="row mt-5">
+            <div class="col">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        <li class="page-item">
+                            <a asp-route="blogIndexCategory" asp-route-blogAddress="@Model.BlogAddress" asp-route-category="@Model.Category.Name" class="page-link" aria-label="First">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+
+                        @{
+                            // link to the previous 5 pages
+                            for (int i = Model.Articles.PageIndex - 5; i < Model.Articles.PageIndex; i++)
+                            {
+                                if (i <= 0)
+                                {
+                                    i = 0;
+                                    continue; // to check the condition again.
+                                }
+                                <li class="page-item">
+                                    <a asp-route="blogIndexCategory" asp-route-blogAddress="@Model.BlogAddress" asp-route-page="@i" asp-route-category="@Model.Category.Name" class="page-link">@i</a>
+                                </li>
+                            }
+
+                            // Show the current page number
+                            <li class="page-item active" aria-current="page">
+                                <a href="#" class="page-link">@Model.Articles.PageIndex</a>
+                            </li>
+
+                            // show the link to the next 5 pages
+                            @for (int i = Model.Articles.PageIndex + 1; i < Model.Articles.PageIndex + 5; i++)
+                            {
+                                if (i > Model.Articles.TotalPages) break;
+                                ;
+                                <li class="page-item">
+                                    <a asp-route="blogIndexCategory" asp-route-blogAddress="@Model.BlogAddress" asp-route-page="@i" asp-route-category="@Model.Category.Name" class="page-link">@i</a>
+                                </li>
+                            }
+
+                            // link to the last page
+                            <li class="page-item">
+                                <a asp-route="blogIndexCategory" asp-route-blogAddress="@Model.BlogAddress" asp-route-page="@Model.Articles.TotalPages" asp-route-category="@Model.Category.Name" class="page-link" aria-label="First">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        }
+                    </ul>
+                </nav>
+            </div>
+        </div>
+
+        // offcanvas
+        @await Html.PartialAsync("_BlogOffcanvasPartial", new BlogOffcanvas
+        {
+            OwnerDisplayName = Model.Owner.DisplayName, BlogTitle = Model.BlogTitle, BlogAddress = Model.BlogAddress,
+            Categories = Model.Categories, Category = Model.Category, VisitorCounter = Model.VisitorCounter,
+            IsOwner = Model.IsOwner
+        })
+    }
+</div>

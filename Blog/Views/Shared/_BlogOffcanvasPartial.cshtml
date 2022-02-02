@@ -15,7 +15,8 @@
             @Model.OwnerDisplayName
         </div>
         <div class="list-group list-group-flush">
-            <a asp-route="blog" asp-route-blogAddress="@Model.BlogAddress" class="list-group-item list-group-item-action">All</a>
+            <a asp-route="blogIndexCategory" asp-route-blogAddress="@Model.BlogAddress" asp-route-category="All" class="list-group-item list-group-item-action">All</a>
+
             @foreach (var category in Model.Categories)
             {
                 <a asp-route="blogIndexCategory" asp-route-blogAddress="@Model.BlogAddress" asp-route-category="@category.Name" class="list-group-item list-group-item-action">@category.Name</a>
