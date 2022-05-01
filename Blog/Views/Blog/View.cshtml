@@ -19,7 +19,8 @@
             </div>            
         }
 
-        <h1><a asp-route="blog" asp-route-blogAddress="@Model.BlogAddress" class="text-decoration-none text-dark"><i class="fs-3 fas fa-arrow-left"></i> @Model.BlogTitle</a></h1>
+        <h1><a asp-route="blogIndexCategory" asp-route-blogAddress="@Model.BlogAddress" asp-route-category="@Model.Category.Name" class="text-decoration-none text-dark">
+            <i class="fs-3 fas fa-arrow-left"></i> @Model.BlogTitle</a></h1>
 
         <div id="article">
             <div class="row mt-5">
@@ -55,7 +56,7 @@
                 }
             </div>
             <div class="row mb-5">
-                <div class="col">@Model.Body</div>
+                <div class="col" style="white-space: pre-wrap;">@Model.Body</div>
             </div>
             @if (Model.Tags!.Count != 0)
             {
@@ -90,7 +91,7 @@
                              <a href="#WriteCommentForm" onclick="modifyComment(@comment.Id)" class="text-secondary"><i class="far fa-edit"></i></a>
                         </div>
                     </div>
-                    <p class="comment-content mt-1" id="commentBody_@comment.Id">@comment.Body</p>
+                    <p class="comment-content mt-1" id="commentBody_@comment.Id" style="white-space: pre-wrap;">@comment.Body</p>
                 </div>
             }
             @await Html.PartialAsync("_WriteCommentPartial", new BlogWriteComment { BlogAddress = Model.BlogAddress, ArticleId = Model.Id, ArticleUrl = Model.Url })
