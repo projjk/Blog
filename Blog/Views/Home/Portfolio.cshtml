@@ -1,0 +1,78 @@
+﻿@{
+    ViewData["Title"] = "Portfolio";
+}
+
+<div class="row row-cols-1 gy-4">
+    <div class="col-10 offset-1 col-xl-6 offset-xl-3">
+        <h1>Solo Projects</h1>
+        <p>All projects are mobile-friendly and made by Jaekyung "Jake" Jeon, entirely by himself.</p>
+    </div>
+    <div class="col-10 offset-1 col-xl-6 offset-xl-3">
+        <h4>
+            ProjectCode9 Blog
+            <a href="https://projectcode9.com/Blog/jake" target="_blank">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-up-right" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/>
+                    <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/>
+                </svg>
+            </a>
+        </h4>
+        <p>
+            This website you are looking at right now.
+        </p>
+        <p>
+            It's developed with .Net 6.0 MVC, EntityFramework 6, PostgreSQL 14, Bootstrap 5 and FontAwesome 5.
+        </p>
+        <p>
+            User can create their own blog space, and is given a unique address for their blog.<br/>
+            User can manage categories, choose how the articles will look in the listing,<br/>
+            how many articles will be listed on one page, and designate multiple tags and a unique URL to each article.
+        </p>
+        <p>
+            People can visit their posting with a URL something like <a href="https://projectcode9.com/Blog/jake/today-is-a-great-day">https://projectcode9.com/Blog/jake/today-is-a-great-day</a>.<br/><br/>
+            People can sort articles by tags or categories.<br/>
+            <a href="https://projectcode9.com/Blog/jake/tag/AZURE">https://projectcode9.com/Blog/jake/tag/AZURE</a> will show Jake's postings that contain the AZURE tag.<br/><br/>
+            <a href="https://projectcode9.com/Blog/bob/category/movie">https://projectcode9.com/Blog/bob/category/movie</a> will show Bob's postings in his Movie category.<br/>
+        </p>
+        <p>
+            People can leave comments on any article anonymously. They must type a password so that they can edit or delete the comment.
+            These passwords are saved safely after being hashed using HMACSHA256 encryption.
+        </p>
+        <hr/>
+        <p>
+            It was my first project using the .Net framework.<br/>
+            I learned great amount of base knowledge regarding how .Net MVC, Bootstrap, authentication, authorization, EntityFramework and C# LINQ work together.
+        </p>
+        <p>
+            Some features, such as making categories invisible, and gallery view type, are not working for now.
+            I had to deal with heavy school work, and instead of sticking to one project and lingering there to make it perfect,
+            I thought it would be more beneficial to start a new project, and learn more new stuff.
+        </p>
+    </div>
+    <div class="col-10 offset-1 col-xl-6 offset-xl-3">
+        <h4>
+            ThisBistro
+            <a href="https://thisbistro.com" target="_blank">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-up-right" viewBox="0 0 16 16">
+                    <path fill-rule="evenodd" d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z"/>
+                    <path fill-rule="evenodd" d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z"/>
+                </svg>
+            </a>
+        </h4>
+        <p>
+            Restaurant website developed with .Net 6.0 Web API, EntityFramework 6, PostgreSQL 14, Angular 13 and Bootstrap 5.
+        </p>
+        <p>
+            Customers can view menus, put them in their cart and place orders.<br/>
+            Managers can set the website's general configurations along with managing categories, menus and orders.
+        </p>
+        <hr/>
+        <p>
+            I learned how Angular works and how it communicates with the backend APIs developed with .Net Web API.
+            While working on this project, I also learned about RxJs, different HTTP methods and status codes, various CSS frameworks, containerizing with Docker, and AWS services for deployment.
+        </p>
+        <p>
+            I was initially going to implement Swagger and Auth0 instead of using built-in EF user management, so the backend was developed with that in mind, but due to lack of time (<i>I don't want to lose the chance of applying to your company!</i>), these features are left behind for now, but will be added afterwards.
+        </p>
+    </div>
+</div>

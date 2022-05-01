@@ -22,7 +22,7 @@
             @foreach (var item in Model.Articles)
             {
             <div class="row mt-5">
-                <div class="col bg-light fw-bolder fs-3">@item.Title</div>
+                <div class="col bg-light fw-bolder fs-3"><a asp-route="blogView" asp-route-blogAddress="@Model.BlogAddress" asp-route-articleUrl="@item.Url" class="text-decoration-none">@item.Title</a></div>
             </div>
             <div class="row mt-2 mb-4">
                 <div class="col text-secondary">By <span class="text-dark">@item.Author.DisplayName</span> - @item.PostDate</div>
