@@ -93,13 +93,34 @@ public class BlogController : Controller
             currentCategory = blog.Categories.FirstOrDefault(c => String.Equals(c.Name, category, StringComparison.InvariantCultureIgnoreCase)) ?? blog.DefaultCategory;
         }
 
+        // tag
+        if (!string.IsNullOrWhiteSpace(tag))
+        {
+            currentCategory = new Category
+                { CategoryType = CategoryTypeEnum.List, ItemsPerPage = 10, Name = "All", Owner = blog.Owner };
+        }
+        
         // Is the current logged in user the owner?
         bool IsOwner = await _db.Users.Include(x => x.Blog)
             .SingleOrDefaultAsync(x => x.Id == _userManager.GetUserId(User)) == blog.Owner;
 
         // Pagination
         IQueryable<Article>? blogArticles;
-        if (currentCategory.Name.Equals("All"))
+        
+        // tag search
+        if (currentCategory.Name.Equals("All") && !string.IsNullOrWhiteSpace(tag))
+        {
+            blogArticles = _db.Entry(blog).Collection(x => x.Articles)
+                .Query()
+                .Where(a => a.Tags.Any(t => EF.Functions.Collate(tag, "case_insensitive") == t.Name))
+                .Include(a => a.Author)
+                .Include(a => a.Category)
+                .Include(a => a.Comments)
+                .Include(a => a.Tags)
+                .OrderByDescending(a => a.PostDate)
+                .AsNoTracking();       
+        }
+        else if (currentCategory.Name.Equals("All"))
         {
             blogArticles = _db.Entry(blog).Collection(x => x.Articles)
                 .Query()
