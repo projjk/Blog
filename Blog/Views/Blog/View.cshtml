@@ -110,7 +110,7 @@
     function modifyComment(commentId) {
         document.getElementById("CommentId").value = commentId
         document.getElementById("CommentAuthor").value = document.getElementById("commentAuthor_" + commentId).innerHTML
-        document.getElementById("CommentAuthor").disabled = true
+        document.getElementById("CommentAuthor").setAttribute("readonly", "readonly");
         document.getElementById("CommentBody").value = document.getElementById("commentBody_" + commentId).innerHTML
         document.getElementById("WriteCommentSubmitDiv").innerHTML = `
 <div class="row">
@@ -130,7 +130,7 @@
         document.getElementById("WriteCommentForm").reset()
         document.getElementById("CommentId").value = 0
         document.getElementById("CommentDelete").value = false
-        document.getElementById("CommentAuthor").disabled = false
+        document.getElementById("CommentAuthor").removeAttribute("readonly");
         document.getElementById("WriteCommentSubmitDiv").innerHTML = '<button type="submit" class="btn btn-secondary w-100">Post</button>'
     }
     

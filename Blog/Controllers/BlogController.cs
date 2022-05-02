@@ -603,6 +603,11 @@ public class BlogController : Controller
     {
         if (!ModelState.IsValid)
         {
+            // for debugging
+            // var errors = ModelState
+            //     .Where(x => x.Value.Errors.Count > 0)
+            //     .Select(x => new { x.Key, x.Value.Errors })
+            //     .ToArray();
             return RedirectToRoute("blogView",
                 new { blogAddress = blogWriteComment.BlogAddress, articleUrl = blogWriteComment.ArticleUrl });
         }
