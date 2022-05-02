@@ -35,7 +35,6 @@
                             <th scope="col">Category Name</th>
                             <th scope="col">Type</th>
                             <th scope="col">Items</th>
-                            <th scope="col">Display</th>
                             <th scope="col">Delete</th>
                         </tr>
                         </thead>
@@ -63,11 +62,6 @@
                                                         <span asp-validation-for="Categories[i].CategoryType" class="text-danger"></span>
 </td>
                                 <td><input class="form-control" asp-for="Categories[i].ItemsPerPage" CausesValidation="false"/></td>
-                            <td>
-                                <div class="form-check form-switch">
-                                    @Html.CheckBoxFor(m => m.Categories[i].Display, new { @class = "form-check-input", role = "switch" })
-                                </div>
-                            </td>
                                 <td>
                                         @{
                                             if (Model.Categories[i].Id.ToString() == Model.DefaultCategory)
@@ -102,12 +96,6 @@
                                 <input class="form-control" asp-for="AddCategory.ItemsPerPage"/>
                             </td>
                             <td>
-                                <div class="form-check form-switch">
-                                    @Html.CheckBoxFor(m => m.AddCategory.Display, new { @class = "form-check-input", role = "switch"})
-                                </div>
-                            </td>
-                            <td>
-
                             </td>
                         </tr>
                         </tbody>

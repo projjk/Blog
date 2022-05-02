@@ -2,19 +2,32 @@
     ViewData["Title"] = "Home Page";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://docs.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
-    @if (User.Identity!.IsAuthenticated)
-    {
-        <table class="table table-sm">
-            @foreach (var claim in User.Claims)
-            {
-                <tr>
-                    <td>@claim.Type</td>
-                    <td>@claim.Value</td>
-                </tr>
-            }
-        </table>
-    }
+<div class="row text-center">
+    <div class="col-10 offset-1 col-xl-6 offset-xl-3 py-5 rounded shadow" id="box">
+            <h1 class="display-6">Thank you for visiting!</h1>
+            <p class="mt-4">
+                This website is for demonstrating my personal projects.
+            </p>
+            <p class="mt-5">
+                Hi! I'm Jake!<br/>
+                I am currently looking for a job as a junior software developer.<br/>
+                I seek best practices to achieve neat and maintainable code,<br/>
+                and I focus on cyber security because I value privacy.
+            </p>
+            <p class="mt-5">
+                Please contact me at<br/>
+                <a href="mailto:jake.jeon@projectcode9.com">jake.jeon@projectcode9.com</a>
+            </p>
+    </div>
 </div>
+
+
+<style>
+    body {
+    background: url("css/brick.jpg") fixed center;
+  background-size: cover;
+    }
+    #box {
+    background-color: white;
+    }
+</style>
