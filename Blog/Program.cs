@@ -71,6 +71,10 @@ app.MapControllerRoute(
     pattern: "Blog/{blogAddress}",
     defaults: new { controller = "Blog", action = "Index" });
 app.MapControllerRoute(
+    name: "portfolio",
+    pattern: "portfolio",
+    defaults: new { controller = "Home", action = "Portfolio" });
+app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
 app.MapRazorPages();
