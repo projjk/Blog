@@ -3,6 +3,8 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Blog.Data;
 using Blog.Areas.Identity.Data;
+using Blog.Services;
+using Microsoft.AspNetCore.Identity.UI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -17,6 +19,7 @@ builder.Services.AddDbContext<BlogIdentityDbContext>(options =>
     options.UseNpgsql(builder.Configuration.GetConnectionString("PostgreSqlDb")));
 // End of Identity
 
+builder.Services.AddTransient<IEmailSender, EmailSender>();
 builder.Services.AddDatabaseDeveloperPageExceptionFilter();
 
 builder.Services.AddControllersWithViews();
@@ -67,10 +70,6 @@ app.MapControllerRoute(
     name: "blog",
     pattern: "Blog/{blogAddress}",
     defaults: new { controller = "Blog", action = "Index" });
-app.MapControllerRoute(
-    name: "portfolio",
-    pattern: "portfolio",
-    defaults: new { controller = "Home", action = "Portfolio" });
 app.MapControllerRoute(
     name: "default",
     pattern: "{controller=Home}/{action=Index}/{id?}");
