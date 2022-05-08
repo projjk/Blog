@@ -11,6 +11,7 @@ Developed with ASP.NET Core 6.0 MVC, Entity Framework 6, PostgreSQL 14, Bootstra
 - Safe from XSS
 - Safe from SQL Injection
 - Authorization with custom roles
+- Safe storage of sensitive data using HMACSHA256 encryption.
 
 ## Features
 
